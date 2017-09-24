@@ -3,7 +3,7 @@ name = "sandbox_rust"
 version = "0.1.0"
 dependencies = [
  "gl_generator 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "glfw-sys 0.1.0",
+ "glfw-sys 0.1.0 (git+https://github.com/perlw/glfw-rs)",
  "libc 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -38,6 +38,7 @@ dependencies = [
 [[package]]
 name = "glfw-sys"
 version = "0.1.0"
+source = "git+https://github.com/perlw/glfw-rs#78b03b00cc200fd56981cc979019691f7cfdcd68"
 dependencies = [
  "cmake 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -71,6 +72,7 @@ dependencies = [
 "checksum cc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7db2f146208d7e0fbee761b09cd65a7f51ccc38705d4e7262dad4d73b12a76b1"
 "checksum cmake 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)" = "357c07e7a1fc95732793c1edb5901e1a1f305cfcf63a90eb12dbd22bdb6b789d"
 "checksum gl_generator 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)" = "e7acbf2ba3d52e9e1ad96a84362129e9c1aa0af55ebfc86a91004e1b83eca61c"
+"checksum glfw-sys 0.1.0 (git+https://github.com/perlw/glfw-rs)" = "<none>"
 "checksum khronos_api 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "d5a08e2a31d665af8f1ca437eab6d00a93c9d62a549f73f9ed8fc2e55b5a91a7"
 "checksum libc 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)" = "d1419b2939a0bc44b77feb34661583c7546b532b192feab36249ab584b86856c"
 "checksum log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)" = "880f77541efa6e5cc74e76910c9884d9859683118839d6a1dc3b11e63512565b"
