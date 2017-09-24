@@ -21,6 +21,14 @@ extern fn window_pos_callback(window: *mut glfw::Window, xpos: c_int, ypos: c_in
   println!("WindowPos: {}x{}", xpos, ypos);
 }
 
+extern fn key_callback(window: *mut glfw::Window, key: c_int, scancode: c_int, action: c_int, mods: c_int) {
+  if key == glfw::KEY_ESCAPE {
+    unsafe {
+      glfw::SetWindowShouldClose(window, glfw::TRUE);
+    }
+  }
+}
+
 fn main() {
   unsafe {
     glfw::SetErrorCallback(error_callback);
@@ -57,6 +65,7 @@ fn main() {
     glfw::WindowHint(glfw::RESIZABLE, glfw::FALSE);
     let window = glfw::CreateWindow(640, 480, CString::new("test title").unwrap().as_ptr(), std::ptr::null_mut(), std::ptr::null_mut());
     glfw::SetWindowPosCallback(window, window_pos_callback);
+    glfw::SetKeyCallback(window, key_callback);
     glfw::MakeContextCurrent(window);
 
     gl::load_with(|s| glfw::GetProcAddress(CString::new(s).unwrap().as_ptr()));
