@@ -3,7 +3,7 @@ name = "sandbox_rust"
 version = "0.1.0"
 dependencies = [
  "gl_generator 0.5.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "glfw 0.1.0",
+ "glfw-sys 0.1.0",
  "libc 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -33,14 +33,6 @@ dependencies = [
  "khronos_api 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "xml-rs 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "glfw"
-version = "0.1.0"
-dependencies = [
- "glfw-sys 0.1.0",
- "libc 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
