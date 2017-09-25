@@ -13,6 +13,10 @@ pub trait HasSystem {
   fn message(&mut self);
 }
 
+struct Message {
+  system: String,
+}
+
 pub struct Kronos {
   systems: Vec<System>,
 }

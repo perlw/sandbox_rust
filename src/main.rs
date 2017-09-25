@@ -60,7 +60,7 @@ impl bedrock::kronos::HasSystem for TestSystem {
 }
 
 fn main() {
-  let mut kronos = bedrock::kronos::Kronos::new();
+  let mut kronos = bedrock::Kronos::new();
   kronos.register("test_system", false, 1.0, TestSystem{
     dummy: 0,
   });
