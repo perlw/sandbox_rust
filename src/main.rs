@@ -59,12 +59,51 @@ impl bedrock::kronos::HasSystem for TestSystem {
   }
 }
 
+struct Foobar {
+  dummy: i32,
+}
+
+struct AnotherFoo {
+  dummy: i32,
+}
+
+impl From<Foobar> for AnotherFoo {
+  fn from(foo: Foobar) -> Self {
+    AnotherFoo{ dummy: foo.dummy }
+  }
+}
+
+enum FooTypes {
+  i32(i32),
+  Foobar(Foobar),
+}
+
+fn print_map_val(types: &FooTypes) {
+  match types {
+    &FooTypes::i32(x) => println!("i32 => {}", x),
+    &FooTypes::Foobar(ref x) => println!("Foobar => {}", x.dummy)
+  }
+}
+
+use std::collections::HashMap;
 fn main() {
   let mut kronos = bedrock::Kronos::new();
   kronos.register("test_system", false, 1.0, TestSystem{
     dummy: 0,
   });
   kronos.start_system("test_system");
+
+  let foo = Foobar{ dummy: 1 };
+  let a_foo = AnotherFoo::from(foo);
+  println!("FOO {}", a_foo.dummy);
+
+  let mut map = HashMap::<&str, FooTypes>::new();
+  map.insert("int", FooTypes::i32(1337));
+  map.insert("foo", FooTypes::Foobar(Foobar{ dummy: 42 }));
+  let map_int = map.get("int").unwrap();
+  let map_foo = map.get("foo").unwrap();
+  print_map_val(map_int);
+  print_map_val(map_foo);
 
   unsafe {
     glfw::SetErrorCallback(error_callback);
