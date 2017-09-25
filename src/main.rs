@@ -3,6 +3,8 @@ mod gl {
   include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
+mod bedrock;
+
 extern crate libc;
 
 use std::ffi::{CStr, CString};
@@ -29,7 +31,36 @@ extern fn key_callback(window: *mut glfw::Window, key: c_int, scancode: c_int, a
   }
 }
 
+struct TestSystem {
+  dummy: i32,
+}
+
+impl bedrock::kronos::HasSystem for TestSystem {
+  fn start(&mut self) {
+    println!("START SYSTEM");
+    self.dummy += 1;
+  }
+
+  fn stop(&mut self) {
+    println!("STOP SYSTEM");
+  }
+
+  fn update(&mut self) {
+    println!("UPDATE SYSTEM");
+  }
+
+  fn message(&mut self) {
+    println!("MESSAGE SYSTEM");
+  }
+}
+
 fn main() {
+  let mut kronos = bedrock::kronos::Kronos::new();
+  kronos.register("test_system", false, TestSystem{
+    dummy: 0,
+  });
+  kronos.start_system("test_system");
+
   unsafe {
     glfw::SetErrorCallback(error_callback);
     // Force error to trigger
