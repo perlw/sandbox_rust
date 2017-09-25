@@ -10,6 +10,7 @@ extern crate libc;
 use std::ffi::{CStr, CString};
 use libc::{c_char, c_int};
 
+#[allow(unused)]
 extern fn error_callback(error: c_int, description: *const c_char) {
   unsafe {
     println!("ERROR {}", CStr::from_ptr(description).to_str().unwrap());
@@ -19,10 +20,12 @@ extern fn error_callback(error: c_int, description: *const c_char) {
   }
 }
 
+#[allow(unused)]
 extern fn window_pos_callback(window: *mut glfw::Window, xpos: c_int, ypos: c_int) {
   println!("WindowPos: {}x{}", xpos, ypos);
 }
 
+#[allow(unused)]
 extern fn key_callback(window: *mut glfw::Window, key: c_int, scancode: c_int, action: c_int, mods: c_int) {
   if key == glfw::KEY_ESCAPE {
     unsafe {
@@ -36,17 +39,19 @@ struct TestSystem {
 }
 
 impl bedrock::kronos::HasSystem for TestSystem {
-  fn start(&mut self) {
+  fn start(&mut self) -> bool {
     println!("START SYSTEM");
     self.dummy += 1;
+    true
   }
 
-  fn stop(&mut self) {
+  fn stop(&mut self) -> bool {
     println!("STOP SYSTEM");
+    true
   }
 
-  fn update(&mut self) {
-    println!("UPDATE SYSTEM");
+  fn update(&mut self, delta: f64) {
+    println!("UPDATE SYSTEM {}", unsafe { glfw::GetTime() as f64 });
   }
 
   fn message(&mut self) {
@@ -56,7 +61,7 @@ impl bedrock::kronos::HasSystem for TestSystem {
 
 fn main() {
   let mut kronos = bedrock::kronos::Kronos::new();
-  kronos.register("test_system", false, TestSystem{
+  kronos.register("test_system", false, 1.0, TestSystem{
     dummy: 0,
   });
   kronos.start_system("test_system");
@@ -105,11 +110,20 @@ fn main() {
     glfw::SetCursor(window, cursor);
 
     gl::ClearColor(0.5, 0.5, 1.0, 1.0);
+
+    let mut last_tick = glfw::GetTime() as f64;
     while glfw::WindowShouldClose(window) == glfw::FALSE {
+      let tick = glfw::GetTime() as f64;
+      let delta = tick - last_tick;
+      last_tick = tick;
+
+      kronos.update(delta);
+
       gl::Clear(gl::COLOR_BUFFER_BIT);
+      // Render stuff
+      glfw::SwapBuffers(window);
 
       glfw::PollEvents();
-      glfw::SwapBuffers(window);
     }
 
     glfw::DestroyWindow(window);
