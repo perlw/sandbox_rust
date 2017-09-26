@@ -36,17 +36,18 @@ extern fn key_callback(window: *mut glfw::Window, key: c_int, scancode: c_int, a
 
 struct TestSystem {
   dummy: i32,
+  foobar: Foobar,
+  baz: String,
 }
 
 impl bedrock::kronos::HasSystem for TestSystem {
   fn start(&mut self) -> bool {
-    println!("START SYSTEM");
     self.dummy += 1;
+    println!("dummy {}, foobar {}, baz {}", self.dummy, self.foobar.dummy, self.baz);
     true
   }
 
   fn stop(&mut self) -> bool {
-    println!("STOP SYSTEM");
     true
   }
 
@@ -74,13 +75,13 @@ impl From<Foobar> for AnotherFoo {
 }
 
 enum FooTypes {
-  i32(i32),
+  Num(i32),
   Foobar(Foobar),
 }
 
 fn print_map_val(types: &FooTypes) {
   match types {
-    &FooTypes::i32(x) => println!("i32 => {}", x),
+    &FooTypes::Num(x) => println!("i32 => {}", x),
     &FooTypes::Foobar(ref x) => println!("Foobar => {}", x.dummy)
   }
 }
@@ -90,6 +91,10 @@ fn main() {
   let mut kronos = bedrock::Kronos::new();
   kronos.register("test_system", false, 1.0, TestSystem{
     dummy: 0,
+    foobar: Foobar{
+      dummy: 42,
+    },
+    baz: String::from("what is the meaning of life"),
   });
   kronos.start_system("test_system");
 
@@ -98,7 +103,7 @@ fn main() {
   println!("FOO {}", a_foo.dummy);
 
   let mut map = HashMap::<&str, FooTypes>::new();
-  map.insert("int", FooTypes::i32(1337));
+  map.insert("int", FooTypes::Num(1337));
   map.insert("foo", FooTypes::Foobar(Foobar{ dummy: 42 }));
   let map_int = map.get("int").unwrap();
   let map_foo = map.get("foo").unwrap();
