@@ -38,7 +38,7 @@ dependencies = [
 [[package]]
 name = "glfw-sys"
 version = "0.1.0"
-source = "git+https://github.com/perlw/glfw-rs#78b03b00cc200fd56981cc979019691f7cfdcd68"
+source = "git+https://github.com/perlw/glfw-rs#0bfd7fe73e93ae7cc75a45571a4026bd26f7a2aa"
 dependencies = [
  "cmake 0.1.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.31 (registry+https://github.com/rust-lang/crates.io-index)",
