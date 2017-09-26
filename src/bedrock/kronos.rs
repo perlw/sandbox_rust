@@ -1,34 +1,30 @@
-struct System {
+struct System<T> {
   name: String,
-  system: Box<HasSystem>,
+  system: Box<HasSystem<T>>,
   running: bool,
   timing: f64,
   since_update: f64,
 }
 
-pub trait HasSystem {
+pub trait HasSystem<T> {
   fn start(&mut self) -> bool;
   fn stop(&mut self) -> bool;
   fn update(&mut self, delta: f64);
-  fn message(&mut self);
+  fn message(&mut self, msg: &T);
 }
 
-struct Message {
-  system: String,
+pub struct Kronos<T> {
+  systems: Vec<System<T>>,
 }
 
-pub struct Kronos {
-  systems: Vec<System>,
-}
-
-impl Kronos {
-  pub fn new() -> Kronos {
-    Kronos {
+impl<T> Kronos<T> {
+  pub fn new() -> Kronos<T> {
+    Kronos::<T> {
       systems: Vec::new(),
     }
   }
 
-  pub fn register<T: HasSystem+'static>(&mut self, name: &str, autostart: bool, timing: f64, system: T) {
+  pub fn register<S: HasSystem<T>+'static>(&mut self, name: &str, autostart: bool, timing: f64, system: S) {
     self.systems.push(System{
       name: name.to_owned(),
       running: false,
@@ -44,7 +40,7 @@ impl Kronos {
 
   pub fn start_system(&mut self, name: &str) {
     for s in &mut self.systems {
-      if !s.running && s.name.as_str() == name {
+      if !s.running && s.name == name {
         if s.system.start() {
           s.running = true;
           println!("System {} started", name);
@@ -57,7 +53,7 @@ impl Kronos {
 
   pub fn stop_system(&mut self, name: &str) {
     for s in &mut self.systems {
-      if s.running && s.name.as_str() == name {
+      if s.running && s.name == name {
         if s.system.stop() {
           s.running = false;
           println!("System {} stopped", name);
@@ -84,9 +80,27 @@ impl Kronos {
       }
     }
   }
+
+  pub fn post_message(&mut self, system: &str, msg: &T) {
+    // Temp solution, should queue first then send
+    for s in &mut self.systems {
+      if s.running && s.name == system {
+        println!("System {} receiving message", s.name);
+        s.system.message(msg);
+      }
+    }
+  }
+
+  pub fn emit_message(&mut self, msg: &T) {
+    // Temp solution, should queue first then send
+    for s in &mut self.systems {
+      println!("System {} receiving message", s.name);
+      s.system.message(msg);
+    }
+  }
 }
 
-impl Drop for Kronos {
+impl<T> Drop for Kronos<T> {
   fn drop(&mut self) {
     for s in &mut self.systems {
       if s.running {

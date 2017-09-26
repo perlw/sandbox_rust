@@ -40,7 +40,7 @@ struct TestSystem {
   baz: String,
 }
 
-impl bedrock::kronos::HasSystem for TestSystem {
+impl bedrock::kronos::HasSystem<FooTypes> for TestSystem {
   fn start(&mut self) -> bool {
     self.dummy += 1;
     println!("dummy {}, foobar {}, baz {}", self.dummy, self.foobar.dummy, self.baz);
@@ -55,8 +55,12 @@ impl bedrock::kronos::HasSystem for TestSystem {
     println!("UPDATE SYSTEM {}", unsafe { glfw::GetTime() as f64 });
   }
 
-  fn message(&mut self) {
+  fn message(&mut self, msg: &FooTypes) {
     println!("MESSAGE SYSTEM");
+    match msg {
+      &FooTypes::Num(x) => println!("\tNum => {}", x),
+      &FooTypes::Foobar(ref x) => println!("\tFoobar => {}", x.dummy)
+    }
   }
 }
 
@@ -88,7 +92,7 @@ fn print_map_val(types: &FooTypes) {
 
 use std::collections::HashMap;
 fn main() {
-  let mut kronos = bedrock::Kronos::new();
+  let mut kronos: bedrock::Kronos<FooTypes> = bedrock::Kronos::new();
   kronos.register("test_system", false, 1.0, TestSystem{
     dummy: 0,
     foobar: Foobar{
@@ -96,7 +100,15 @@ fn main() {
     },
     baz: String::from("what is the meaning of life"),
   });
+  kronos.register("test_system2", false, 1.0, TestSystem{
+    dummy: 42,
+    foobar: Foobar{
+      dummy: 1337,
+    },
+    baz: String::from("yes indeed"),
+  });
   kronos.start_system("test_system");
+  kronos.start_system("test_system2");
 
   let foo = Foobar{ dummy: 1 };
   let a_foo = AnotherFoo::from(foo);
@@ -109,6 +121,9 @@ fn main() {
   let map_foo = map.get("foo").unwrap();
   print_map_val(map_int);
   print_map_val(map_foo);
+
+  kronos.post_message("test_system", &FooTypes::Num(1337));
+  kronos.emit_message(&FooTypes::Num(42));
 
   unsafe {
     glfw::SetErrorCallback(error_callback);
