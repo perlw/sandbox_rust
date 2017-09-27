@@ -19,9 +19,7 @@ pub struct Kronos<T> {
 
 impl<T> Kronos<T> {
     pub fn new() -> Kronos<T> {
-        Kronos::<T> {
-            systems: Vec::new(),
-        }
+        Kronos::<T> { systems: Vec::new() }
     }
 
     pub fn register<S: HasSystem<T> + 'static>(
@@ -80,8 +78,9 @@ impl<T> Kronos<T> {
             if s.since_update >= s.timing {
                 while s.since_update >= s.timing {
                     s.since_update -= s.timing;
-                    s.system
-                        .update(if s.timing > 0.0 { s.timing } else { delta });
+                    s.system.update(
+                        if s.timing > 0.0 { s.timing } else { delta },
+                    );
                 }
                 s.since_update = 0.0;
             }

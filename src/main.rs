@@ -111,10 +111,17 @@ fn main() {
     kronos.post_message("test_system", &FooTypes::Num(1337));
     kronos.emit_message(&FooTypes::Num(42));
 
-    let window = bedrock::picasso::Window::new();
+    let picasso = bedrock::Picasso::new();
+    let window = picasso.new_window().resizable(false).create().unwrap();
 
     unsafe {
         gl::load_with(|s| glfw::GetProcAddress(CString::new(s).unwrap().as_ptr()));
+
+        gl::Enable(gl::CULL_FACE);
+        gl::Enable(gl::DEPTH_TEST);
+        gl::ClearDepth(1.0);
+        gl::DepthFunc(gl::LESS);
+        gl::Viewport(0, 0, 640, 480);
         gl::ClearColor(0.5, 0.5, 1.0, 1.0);
     }
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
