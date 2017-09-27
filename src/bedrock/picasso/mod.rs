@@ -70,6 +70,9 @@ impl Picasso {
             width: 640,
             height: 480,
             resizable: true,
+            ogl_major: 1,
+            ogl_minor: 0,
+            ogl_debug: false,
         }
     }
 }

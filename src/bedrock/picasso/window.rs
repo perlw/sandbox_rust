@@ -29,21 +29,24 @@ pub struct WindowConfig {
     pub width: u32,
     pub height: u32,
     pub resizable: bool,
+    pub ogl_major: u32,
+    pub ogl_minor: u32,
+    pub ogl_debug: bool,
 }
 
 impl WindowConfig {
-    pub fn title(&mut self, val: String) -> &mut Self {
-        self.title = val;
+    pub fn title(&mut self, title: String) -> &mut Self {
+        self.title = title;
         self
     }
 
-    pub fn width(&mut self, val: u32) -> &mut Self {
-        self.width = val;
+    pub fn width(&mut self, width: u32) -> &mut Self {
+        self.width = width;
         self
     }
 
-    pub fn height(&mut self, val: u32) -> &mut Self {
-        self.height = val;
+    pub fn height(&mut self, height: u32) -> &mut Self {
+        self.height = height;
         self
     }
 
@@ -52,21 +55,33 @@ impl WindowConfig {
         self
     }
 
+    pub fn opengl_context_version(&mut self, major: u32, minor: u32) -> &mut Self {
+        self.ogl_major = major;
+        self.ogl_minor = minor;
+        self
+    }
+
+    pub fn opengl_context_debug(&mut self, flag: bool) -> &mut Self {
+        self.ogl_debug = flag;
+        self
+    }
+
     pub fn create(&self) -> Result<Window, bool> {
         let mut window = Window { raw_ptr: std::ptr::null_mut() };
 
         unsafe {
             glfw::DefaultWindowHints();
-            glfw::WindowHint(glfw::CONTEXT_VERSION_MAJOR, 4);
-            glfw::WindowHint(glfw::CONTEXT_VERSION_MINOR, 0);
+            glfw::WindowHint(glfw::CONTEXT_VERSION_MAJOR, self.ogl_major as c_int);
+            glfw::WindowHint(glfw::CONTEXT_VERSION_MINOR, self.ogl_minor as c_int);
             glfw::WindowHint(glfw::OPENGL_PROFILE, glfw::OPENGL_CORE_PROFILE);
-            /*
-            glfw::WindowHint(glfw::OPENGL_DEBUG_CONTEXT, ...);
-            glEnable(GL_DEBUG_OUTPUT);
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-            glDebugMessageCallback((GLDEBUGPROC)debug_callback, NULL);
-            */
-
+            glfw::WindowHint(
+                glfw::OPENGL_DEBUG_CONTEXT,
+                if self.ogl_debug {
+                    glfw::TRUE
+                } else {
+                    glfw::FALSE
+                },
+            );
             glfw::WindowHint(
                 glfw::RESIZABLE,
                 if self.resizable {
@@ -75,6 +90,7 @@ impl WindowConfig {
                     glfw::FALSE
                 },
             );
+
             window.raw_ptr = glfw::CreateWindow(
                 self.width as c_int,
                 self.height as c_int,
@@ -85,7 +101,6 @@ impl WindowConfig {
 
             glfw::SetWindowPosCallback(window.raw_ptr, window_pos_callback);
             glfw::SetKeyCallback(window.raw_ptr, key_callback);
-            glfw::MakeContextCurrent(window.raw_ptr);
         }
 
         Ok(window)
@@ -97,6 +112,12 @@ pub struct Window {
 }
 
 impl Window {
+    pub fn make_context_current(&self) {
+        unsafe {
+            glfw::MakeContextCurrent(self.raw_ptr);
+        }
+    }
+
     pub fn should_close(&self) -> bool {
         unsafe { (glfw::WindowShouldClose(self.raw_ptr) == glfw::TRUE) }
     }

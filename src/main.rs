@@ -112,10 +112,22 @@ fn main() {
     kronos.emit_message(&FooTypes::Num(42));
 
     let picasso = bedrock::Picasso::new();
-    let window = picasso.new_window().resizable(false).create().unwrap();
+    let window = picasso
+        .new_window()
+        .opengl_context_version(4, 0)
+        .opengl_context_debug(true)
+        .resizable(false)
+        .create()
+        .unwrap();
+    window.make_context_current();
 
     unsafe {
         gl::load_with(|s| glfw::GetProcAddress(CString::new(s).unwrap().as_ptr()));
+        /*
+            glEnable(GL_DEBUG_OUTPUT);
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+            glDebugMessageCallback((GLDEBUGPROC)debug_callback, NULL);
+            */
 
         gl::Enable(gl::CULL_FACE);
         gl::Enable(gl::DEPTH_TEST);
