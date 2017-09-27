@@ -1,5 +1,5 @@
 extern crate libc;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 
 extern crate glfw_sys as glfw;
 #[allow(unused)]
@@ -41,6 +41,12 @@ impl bedrock::kronos::HasSystem<FooTypes> for TestSystem {
             &FooTypes::Num(x) => println!("\tNum => {}", x),
             &FooTypes::Foobar(ref x) => println!("\tFoobar => {}", x.dummy),
         }
+    }
+}
+
+extern "system" fn debug_callback(source: gl::types::GLenum, gltype: gl::types::GLenum, id: gl::types::GLuint, severity: gl::types::GLenum, length: gl::types::GLsizei, message: *const gl::types::GLchar, userParam: *mut std::os::raw::c_void) {
+    unsafe {
+        println!("GL ERR: {}", CStr::from_ptr(message).to_string_lossy());
     }
 }
 
@@ -114,7 +120,7 @@ fn main() {
     let picasso = bedrock::Picasso::new();
     let window = picasso
         .new_window()
-        .opengl_context_version(4, 0)
+        .opengl_context_version(4, 3)
         .opengl_context_debug(true)
         .resizable(false)
         .create()
@@ -123,11 +129,10 @@ fn main() {
 
     unsafe {
         gl::load_with(|s| glfw::GetProcAddress(CString::new(s).unwrap().as_ptr()));
-        /*
-            glEnable(GL_DEBUG_OUTPUT);
-            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-            glDebugMessageCallback((GLDEBUGPROC)debug_callback, NULL);
-            */
+
+        gl::Enable(gl::DEBUG_OUTPUT);
+        gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
+        gl::DebugMessageCallback(debug_callback, std::ptr::null());
 
         gl::Enable(gl::CULL_FACE);
         gl::Enable(gl::DEPTH_TEST);
