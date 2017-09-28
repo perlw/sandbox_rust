@@ -112,6 +112,13 @@ fn main() {
         .resizable(false)
         .create()
         .unwrap();
+    let window2 = picasso
+        .new_window()
+        .opengl_context_version(4, 3)
+        .opengl_context_debug(true)
+        .resizable(false)
+        .create()
+        .unwrap();
 
     let canvas = window
         .new_canvas()
@@ -119,18 +126,28 @@ fn main() {
         .debug(|msg| println!("GL ERR: {}", msg))
         .create()
         .unwrap();
+    let canvas2 = window2
+        .new_canvas()
+        .clear_color(1.0, 0.0, 1.0, 1.0)
+        .debug(|msg| println!("GL ERR2: {}", msg))
+        .create()
+        .unwrap();
 
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
-    while !window.should_close() {
+    while !window.should_close() || !window2.should_close() {
         let tick = unsafe { glfw::GetTime() as f64 };
         let delta = tick - last_tick;
         last_tick = tick;
 
         kronos.update(delta);
 
+        window.make_context_current();
         canvas.clear();
-        // Render stuff
         window.swap_buffers();
+
+        window2.make_context_current();
+        canvas2.clear();
+        window2.swap_buffers();
 
         picasso.poll_events();
     }
