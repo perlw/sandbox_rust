@@ -1,8 +1,9 @@
+extern crate libc;
 extern crate glfw_sys as glfw;
 
 use std;
 use std::ffi::CStr;
-use libc::{c_char, c_int};
+use self::libc::{c_char, c_int};
 
 pub mod window;
 pub mod canvas;

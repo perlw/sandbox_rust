@@ -1,5 +1,3 @@
-extern crate libc;
-
 extern crate glfw_sys as glfw;
 
 mod bedrock;
@@ -114,9 +112,13 @@ fn main() {
         .resizable(false)
         .create()
         .unwrap();
-    window.make_context_current();
 
-    let canvas = window.new_canvas().create().unwrap();
+    let canvas = window
+        .new_canvas()
+        .clear_color(0.5, 0.5, 1.0, 1.0)
+        .debug(|msg| println!("GL ERR: {}", msg))
+        .create()
+        .unwrap();
 
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
     while !window.should_close() {
