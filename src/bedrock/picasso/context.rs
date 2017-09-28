@@ -10,10 +10,9 @@ mod gl {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-use super::window::Window;
-
 pub type DebugFn = fn(message: String);
 
+#[allow(unused)]
 extern "system" fn debug_callback(
     source: gl::types::GLenum,
     gltype: gl::types::GLenum,

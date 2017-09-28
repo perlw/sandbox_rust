@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 extern crate libc;
 extern crate glfw_sys as glfw;
 
@@ -8,7 +9,9 @@ use self::libc::{c_char, c_int};
 pub mod window;
 pub mod context;
 
+#[allow(unused_imports)]
 use self::window::{Window, WindowConfig};
+#[allow(unused_imports)]
 use self::context::{Context, ContextConfig};
 
 #[allow(unused)]

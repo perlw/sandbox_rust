@@ -17,6 +17,7 @@ pub struct Kronos<T> {
     systems: Vec<System<T>>,
 }
 
+#[allow(dead_code)]
 impl<T> Kronos<T> {
     pub fn new() -> Kronos<T> {
         Kronos::<T> { systems: Vec::new() }
