@@ -1,8 +1,15 @@
 extern crate glfw_sys as glfw;
 
+#[allow(unused)]
+mod gl {
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
+
 use std;
 use std::ffi::CString;
 use libc::c_int;
+
+use super::canvas::CanvasConfig;
 
 #[allow(unused)]
 extern "C" fn window_pos_callback(window: *mut glfw::Window, xpos: c_int, ypos: c_int) {
@@ -126,6 +133,10 @@ impl Window {
         unsafe {
             glfw::SwapBuffers(self.raw_ptr);
         }
+    }
+
+    pub fn new_canvas(&self) -> CanvasConfig {
+        CanvasConfig { window: self }
     }
 }
 

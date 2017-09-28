@@ -5,8 +5,10 @@ use std::ffi::CStr;
 use libc::{c_char, c_int};
 
 pub mod window;
+pub mod canvas;
 
 use self::window::{Window, WindowConfig};
+use self::canvas::{Canvas, CanvasConfig};
 
 #[allow(unused)]
 extern "C" fn error_callback(error: c_int, description: *const c_char) {
@@ -62,6 +64,12 @@ impl Picasso {
         }
 
         Picasso {}
+    }
+
+    pub fn poll_events(&self) {
+        unsafe {
+            glfw::PollEvents();
+        }
     }
 
     pub fn new_window(&self) -> WindowConfig {
