@@ -24,12 +24,11 @@ extern "system" fn debug_callback(
     user_param: *mut std::os::raw::c_void,
 ) {
     let msg = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
-    let canvas = unsafe { &mut *(user_param as *mut Canvas) };
-    (canvas.debug_callback.expect("missing debug callback"))(msg);
+    let context = unsafe { &mut *(user_param as *mut Context) };
+    (context.debug_callback.expect("missing debug callback"))(msg);
 }
 
-pub struct CanvasConfig<'a> {
-    pub window: &'a Window,
+pub struct ContextConfig {
     pub debug_callback: Option<DebugFn>,
     pub viewport_x: u32,
     pub viewport_y: u32,
@@ -41,7 +40,7 @@ pub struct CanvasConfig<'a> {
     pub clear_color_a: f32,
 }
 
-impl<'a> CanvasConfig<'a> {
+impl ContextConfig {
     pub fn debug(&mut self, fun: DebugFn) -> &mut Self {
         self.debug_callback = Some(fun);
         self
@@ -63,17 +62,20 @@ impl<'a> CanvasConfig<'a> {
         self
     }
 
-    pub fn create(&mut self) -> Result<Canvas, bool> {
-        self.window.make_context_current();
-        let mut canvas = Canvas { debug_callback: self.debug_callback };
+    pub fn create(&mut self) -> Result<Context, bool> {
+        let mut context = Context {
+            value: 1,
+            debug_callback: self.debug_callback,
+        };
 
         unsafe {
             gl::load_with(|s| glfw::GetProcAddress(CString::new(s).unwrap().as_ptr()));
 
-            if self.debug_callback != None {
+            if self.debug_callback.is_some() {
+                // Check for extension first
                 gl::Enable(gl::DEBUG_OUTPUT);
                 gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
-                gl::DebugMessageCallback(debug_callback, &mut canvas as *mut _ as *mut _);
+                gl::DebugMessageCallback(debug_callback, &mut context as *mut _ as *mut _);
             }
 
             gl::Enable(gl::CULL_FACE);
@@ -95,15 +97,16 @@ impl<'a> CanvasConfig<'a> {
             );
         }
 
-        Ok(canvas)
+        Ok(context)
     }
 }
 
-pub struct Canvas {
+pub struct Context {
     pub debug_callback: Option<DebugFn>,
+    pub value: i32,
 }
 
-impl Canvas {
+impl Context {
     pub fn clear(&self) {
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT);

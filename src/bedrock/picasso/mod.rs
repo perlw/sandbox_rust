@@ -6,10 +6,10 @@ use std::ffi::CStr;
 use self::libc::{c_char, c_int};
 
 pub mod window;
-pub mod canvas;
+pub mod context;
 
 use self::window::{Window, WindowConfig};
-use self::canvas::{Canvas, CanvasConfig};
+use self::context::{Context, ContextConfig};
 
 #[allow(unused)]
 extern "C" fn error_callback(error: c_int, description: *const c_char) {
@@ -82,6 +82,17 @@ impl Picasso {
             ogl_major: 1,
             ogl_minor: 0,
             ogl_debug: false,
+            context_config: ContextConfig {
+                debug_callback: None,
+                viewport_x: 0,
+                viewport_y: 0,
+                viewport_width: 640,
+                viewport_height: 480,
+                clear_color_r: 0.0,
+                clear_color_g: 0.0,
+                clear_color_b: 0.0,
+                clear_color_a: 0.0,
+            },
         }
     }
 }

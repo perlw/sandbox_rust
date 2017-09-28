@@ -105,31 +105,29 @@ fn main() {
     kronos.emit_message(&FooTypes::Num(42));
 
     let picasso = bedrock::Picasso::new();
-    let window = picasso
+    let mut window = picasso
         .new_window()
         .opengl_context_version(4, 3)
         .opengl_context_debug(true)
         .resizable(false)
-        .create()
-        .unwrap();
-    let window2 = picasso
-        .new_window()
-        .opengl_context_version(4, 3)
-        .opengl_context_debug(true)
-        .resizable(false)
+        .with_context_config(|config| {
+            config.clear_color(0.5, 0.5, 1.0, 1.0).debug(|msg| {
+                println!("GL ERR: {}", msg)
+            });
+        })
         .create()
         .unwrap();
 
-    let canvas = window
-        .new_canvas()
-        .clear_color(0.5, 0.5, 1.0, 1.0)
-        .debug(|msg| println!("GL ERR: {}", msg))
-        .create()
-        .unwrap();
-    let canvas2 = window2
-        .new_canvas()
-        .clear_color(1.0, 0.0, 1.0, 1.0)
-        .debug(|msg| println!("GL ERR2: {}", msg))
+    let mut window2 = picasso
+        .new_window()
+        .opengl_context_version(4, 3)
+        .opengl_context_debug(true)
+        .resizable(false)
+        .with_context_config(|config| {
+            config.clear_color(1.0, 0.0, 1.0, 1.0).debug(|msg| {
+                println!("GL ERR2: {}", msg)
+            });
+        })
         .create()
         .unwrap();
 
@@ -141,12 +139,10 @@ fn main() {
 
         kronos.update(delta);
 
-        window.make_context_current();
-        canvas.clear();
+        window.with_context(|context| { context.clear(); });
         window.swap_buffers();
 
-        window2.make_context_current();
-        canvas2.clear();
+        window2.with_context(|context| { context.clear(); });
         window2.swap_buffers();
 
         picasso.poll_events();

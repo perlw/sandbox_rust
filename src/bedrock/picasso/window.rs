@@ -10,7 +10,7 @@ use std;
 use std::ffi::CString;
 use self::libc::c_int;
 
-use super::canvas::CanvasConfig;
+use super::context::{ContextConfig, Context};
 
 #[allow(unused)]
 extern "C" fn window_pos_callback(window: *mut glfw::Window, xpos: c_int, ypos: c_int) {
@@ -40,6 +40,7 @@ pub struct WindowConfig {
     pub ogl_major: u32,
     pub ogl_minor: u32,
     pub ogl_debug: bool,
+    pub context_config: ContextConfig,
 }
 
 impl WindowConfig {
@@ -74,9 +75,18 @@ impl WindowConfig {
         self
     }
 
-    pub fn create(&self) -> Result<Window, bool> {
+    pub fn with_context_config<F>(&mut self, fun: F) -> &mut Self
+    where
+        F: Fn(&mut ContextConfig),
+    {
+        fun(&mut self.context_config);
+        self
+    }
+
+    pub fn create(&mut self) -> Result<Window, bool> {
         let mut window = Window {
             raw_ptr: std::ptr::null_mut(),
+            context: None,
             width: 640,
             height: 480,
         };
@@ -113,6 +123,12 @@ impl WindowConfig {
 
             glfw::SetWindowPosCallback(window.raw_ptr, window_pos_callback);
             glfw::SetKeyCallback(window.raw_ptr, key_callback);
+
+            window.make_context_current();
+            window.context = match self.context_config.create() {
+                Ok(context) => Some(Box::new(context)),
+                Err(_) => None,
+            };
         }
 
         Ok(window)
@@ -121,6 +137,7 @@ impl WindowConfig {
 
 pub struct Window {
     raw_ptr: *mut glfw::Window,
+    context: Option<Box<Context>>,
     pub width: u32,
     pub height: u32,
 }
@@ -142,18 +159,13 @@ impl Window {
         }
     }
 
-    pub fn new_canvas(&self) -> CanvasConfig {
-        CanvasConfig {
-            window: self,
-            debug_callback: None,
-            viewport_x: 0,
-            viewport_y: 0,
-            viewport_width: self.width,
-            viewport_height: self.height,
-            clear_color_r: 0.0,
-            clear_color_g: 0.0,
-            clear_color_b: 0.0,
-            clear_color_a: 0.0,
+    pub fn with_context<F>(&mut self, fun: F)
+    where
+        F: Fn(&mut Box<Context>),
+    {
+        if self.context.is_some() {
+            self.make_context_current();
+            fun(&mut self.context.as_mut().unwrap());
         }
     }
 }
