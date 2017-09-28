@@ -1,12 +1,12 @@
-struct System<T> {
+struct SystemState<T> {
     name: String,
-    system: Box<HasSystem<T>>,
+    system: Box<System<T>>,
     running: bool,
     timing: f64,
     since_update: f64,
 }
 
-pub trait HasSystem<T> {
+pub trait System<T> {
     fn start(&mut self) -> bool;
     fn stop(&mut self) -> bool;
     fn update(&mut self, delta: f64);
@@ -14,7 +14,7 @@ pub trait HasSystem<T> {
 }
 
 pub struct Kronos<T> {
-    systems: Vec<System<T>>,
+    systems: Vec<SystemState<T>>,
 }
 
 #[allow(dead_code)]
@@ -23,14 +23,14 @@ impl<T> Kronos<T> {
         Kronos::<T> { systems: Vec::new() }
     }
 
-    pub fn register<S: HasSystem<T> + 'static>(
+    pub fn register<S: System<T> + 'static>(
         &mut self,
         name: &str,
         autostart: bool,
         timing: f64,
         system: S,
     ) {
-        self.systems.push(System {
+        self.systems.push(SystemState {
             name: name.to_owned(),
             running: false,
             timing,
