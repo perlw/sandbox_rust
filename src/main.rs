@@ -1,5 +1,8 @@
 extern crate glfw_sys as glfw;
 
+use std::fs::File;
+use std::io::prelude::*;
+
 mod bedrock;
 
 struct TestSystem {
@@ -130,6 +133,14 @@ fn main() {
         })
         .create()
         .unwrap();
+
+    let shader = window.with_context(|context| {
+        let mut source: Vec<u8> = Vec::new();
+        File::open("assets/shaders/simple.vert")
+            .and_then(|mut file| file.read_to_end(&mut source))
+            .unwrap();
+        context.create_shader(&source)
+    }).unwrap();
 
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
     while !window.should_close() || !window2.should_close() {

@@ -159,14 +159,12 @@ impl Window {
         }
     }
 
-    pub fn with_context<F>(&mut self, fun: F)
+    pub fn with_context<T, F>(&mut self, fun: F) -> T
     where
-        F: Fn(&mut Box<Context>),
+        F: Fn(&mut Box<Context>) -> T,
     {
-        if self.context.is_some() {
-            self.make_context_current();
-            fun(&mut self.context.as_mut().unwrap());
-        }
+        self.make_context_current();
+        fun(&mut self.context.as_mut().expect("Must have a context"))
     }
 }
 

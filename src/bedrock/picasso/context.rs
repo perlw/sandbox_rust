@@ -4,6 +4,9 @@ extern crate glfw_sys as glfw;
 use std;
 use std::ffi::{CStr, CString};
 use self::libc::{c_int, c_float};
+use std::ptr;
+
+use super::shader;
 
 #[allow(unused)]
 mod gl {
@@ -112,7 +115,33 @@ impl Context {
         }
     }
 
-    pub fn compile_shader(&self) -> Handle {
-        0
+    pub fn create_shader(&self, source: &Vec<u8>) -> Result<shader::Shader, String> {
+        let handle = unsafe { gl::CreateShader(gl::VERTEX_SHADER) } as Handle;
+
+        unsafe {
+            let c_source = CString::new(&source[..]).unwrap();
+            gl::ShaderSource(handle, 1, &c_source.as_ptr(), ptr::null());
+            gl::CompileShader(handle);
+        }
+
+        let mut status = gl::FALSE as gl::types::GLint;
+        unsafe {
+            gl::GetShaderiv(handle, gl::COMPILE_STATUS, &mut status);
+        }
+        if status != (gl::TRUE as gl::types::GLint) {
+            let mut len = 0;
+            unsafe {
+                gl::GetShaderiv(handle, gl::INFO_LOG_LENGTH, &mut len);
+            }
+            let mut buf = Vec::<u8>::with_capacity(len as usize);
+            unsafe {
+                buf.set_len((len as usize) - 1);
+                gl::GetShaderInfoLog(handle, len, ptr::null_mut(), buf.as_mut_ptr() as *mut i8);
+            }
+
+            return Err(String::from_utf8(buf).expect("Failed to get shader err log"));
+        }
+
+        Ok(shader::Shader{})
     }
 }
