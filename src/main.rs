@@ -1,6 +1,4 @@
 use std::path::PathBuf;
-use std::any::Any;
-use std::rc::Rc;
 
 extern crate glfw_sys as glfw;
 
@@ -67,40 +65,8 @@ fn print_map_val(types: &FooTypes) {
     }
 }
 
-struct TextAsset {
-    dummy: i32,
-}
-
-impl bedrock::librarian::Asset for TextAsset {}
-
-struct TextAssetLoader {}
-
-impl bedrock::librarian::Tome for TextAssetLoader {
-    fn load(&self) -> Option<Rc<bedrock::librarian::Asset>> {
-        Some(Rc::new(TextAsset { dummy: 42 }))
-    }
-
-    fn destroy(&self, page: Rc<bedrock::librarian::Asset>) {}
-}
-
-#[derive(PartialEq, Eq, Hash)]
-enum AssetTypes {
-    Text,
-}
-
 use std::collections::HashMap;
 fn main() {
-    let mut librarian: bedrock::Librarian<AssetTypes> = bedrock::Librarian::new();
-    librarian.tome(AssetTypes::Text, TextAssetLoader {});
-
-    //let asset: TextAsset = librarian.fetch(AssetTypes::Text).unwrap().get().unwrap();
-    //let asset2: Rc<TextAsset> = librarian.fetch(AssetTypes::Text);
-    //println!("-----> {}", asset.dummy);
-    /*let asset: &Box<TextAsset> = librarian.fetch(AssetTypes::Text);
-    let asset2: &Box<TextAsset> = librarian.fetch(AssetTypes::Text);*/
-    //println!("--------> {}", asset.dummy);
-    // librarian.fetch(AssetTypes::Text, "test", "path/to/test.txt");
-
     let mut kronos: bedrock::Kronos<FooTypes> = bedrock::Kronos::new();
     kronos.register(
         "test_system",
