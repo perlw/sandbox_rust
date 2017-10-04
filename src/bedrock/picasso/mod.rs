@@ -1,6 +1,6 @@
 #![allow(dead_code)]
-extern crate libc;
 extern crate glfw_sys as glfw;
+extern crate libc;
 
 use std;
 use std::ffi::CStr;

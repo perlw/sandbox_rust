@@ -114,9 +114,9 @@ fn main() {
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
-            config.clear_color(0.5, 0.5, 1.0, 1.0).debug(|msg| {
-                println!("GL ERR: {}", msg)
-            });
+            config
+                .clear_color(0.5, 0.5, 1.0, 1.0)
+                .debug(|msg| println!("GL ERR: {}", msg));
         })
         .create()
         .unwrap();
@@ -127,20 +127,40 @@ fn main() {
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
-            config.clear_color(1.0, 0.0, 1.0, 1.0).debug(|msg| {
-                println!("GL ERR2: {}", msg)
-            });
+            config
+                .clear_color(1.0, 0.0, 1.0, 1.0)
+                .debug(|msg| println!("GL ERR2: {}", msg));
         })
         .create()
         .unwrap();
 
-    let shader = window.with_context(|context| {
-        let mut source: Vec<u8> = Vec::new();
-        File::open("assets/shaders/simple.vert")
-            .and_then(|mut file| file.read_to_end(&mut source))
-            .unwrap();
-        context.create_shader(&source)
-    }).unwrap();
+    let shader = window
+        .with_context(|context| {
+            let mut vert_source: Vec<u8> = Vec::new();
+            let mut frag_source: Vec<u8> = Vec::new();
+            File::open("assets/shaders/simple.vert")
+                .and_then(|mut file| file.read_to_end(&mut vert_source))
+                .unwrap();
+            File::open("assets/shaders/simple.frag")
+                .and_then(|mut file| file.read_to_end(&mut frag_source))
+                .unwrap();
+            context.create_shader(&vert_source, &frag_source)
+        })
+        .unwrap();
+
+    let shader2 = window2
+        .with_context(|context| {
+            let mut vert_source: Vec<u8> = Vec::new();
+            let mut frag_source: Vec<u8> = Vec::new();
+            File::open("assets/shaders/simple.vert")
+                .and_then(|mut file| file.read_to_end(&mut vert_source))
+                .unwrap();
+            File::open("assets/shaders/simple.frag")
+                .and_then(|mut file| file.read_to_end(&mut frag_source))
+                .unwrap();
+            context.create_shader(&vert_source, &frag_source)
+        })
+        .unwrap();
 
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
     while !window.should_close() || !window2.should_close() {
@@ -150,10 +170,14 @@ fn main() {
 
         kronos.update(delta);
 
-        window.with_context(|context| { context.clear(); });
+        window.with_context(|context| {
+            context.clear();
+        });
         window.swap_buffers();
 
-        window2.with_context(|context| { context.clear(); });
+        window2.with_context(|context| {
+            context.clear();
+        });
         window2.swap_buffers();
 
         picasso.poll_events();

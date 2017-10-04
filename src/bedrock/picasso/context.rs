@@ -1,9 +1,9 @@
-extern crate libc;
 extern crate glfw_sys as glfw;
+extern crate libc;
 
 use std;
 use std::ffi::{CStr, CString};
-use self::libc::{c_int, c_float};
+use self::libc::{c_float, c_int};
 use std::ptr;
 
 use super::shader;
@@ -115,8 +115,8 @@ impl Context {
         }
     }
 
-    pub fn create_shader(&self, source: &Vec<u8>) -> Result<shader::Shader, String> {
-        let handle = unsafe { gl::CreateShader(gl::VERTEX_SHADER) } as Handle;
+    fn compile_shader(&self, source: &Vec<u8>, shader_type: u32) -> Result<Handle, String> {
+        let handle = unsafe { gl::CreateShader(shader_type) } as Handle;
 
         unsafe {
             let c_source = CString::new(&source[..]).unwrap();
@@ -137,11 +137,67 @@ impl Context {
             unsafe {
                 buf.set_len((len as usize) - 1);
                 gl::GetShaderInfoLog(handle, len, ptr::null_mut(), buf.as_mut_ptr() as *mut i8);
+
+                gl::DeleteShader(handle);
             }
 
-            return Err(String::from_utf8(buf).expect("Failed to get shader err log"));
+            return Err(
+                String::from_utf8(buf).expect("Shader compile: Failed to get shader err log"),
+            );
         }
 
-        Ok(shader::Shader{})
+        Ok(handle)
+    }
+
+    fn attach_shaders(&self, vert_handle: Handle, frag_handle: Handle) -> Result<Handle, String> {
+        let handle = unsafe { gl::CreateProgram() } as Handle;
+
+        unsafe {
+            gl::AttachShader(handle, vert_handle);
+            gl::AttachShader(handle, frag_handle);
+            gl::LinkProgram(handle);
+        }
+
+        let mut status = gl::FALSE as gl::types::GLint;
+        unsafe {
+            gl::GetProgramiv(handle, gl::LINK_STATUS, &mut status);
+        }
+        if status != (gl::TRUE as gl::types::GLint) {
+            let mut len = 0;
+            unsafe {
+                gl::GetProgramiv(handle, gl::INFO_LOG_LENGTH, &mut len);
+            }
+            let mut buf = Vec::<u8>::with_capacity(len as usize);
+            unsafe {
+                buf.set_len((len as usize) - 1);
+                gl::GetProgramInfoLog(handle, len, ptr::null_mut(), buf.as_mut_ptr() as *mut i8);
+
+                gl::DeleteProgram(handle);
+            }
+
+            return Err(
+                String::from_utf8(buf).expect("Program attach: Failed to get program err log"),
+            );
+        }
+
+        Ok(handle)
+    }
+
+    pub fn create_shader(
+        &self,
+        vert_source: &Vec<u8>,
+        frag_source: &Vec<u8>,
+    ) -> Option<shader::Shader> {
+        let vert = self.compile_shader(vert_source, gl::VERTEX_SHADER);
+        let frag = self.compile_shader(frag_source, gl::FRAGMENT_SHADER);
+
+        if vert.is_err() || frag.is_err() {
+            return None;
+        }
+
+        match self.attach_shaders(vert.unwrap(), frag.unwrap()) {
+            Ok(handle) => Some(shader::Shader { handle }),
+            Err(msg) => None,
+        }
     }
 }

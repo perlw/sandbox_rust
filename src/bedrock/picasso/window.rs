@@ -1,5 +1,5 @@
-extern crate libc;
 extern crate glfw_sys as glfw;
+extern crate libc;
 
 #[allow(unused)]
 mod gl {
@@ -10,7 +10,7 @@ use std;
 use std::ffi::CString;
 use self::libc::c_int;
 
-use super::context::{ContextConfig, Context};
+use super::context::{Context, ContextConfig};
 
 #[allow(unused)]
 extern "C" fn window_pos_callback(window: *mut glfw::Window, xpos: c_int, ypos: c_int) {
