@@ -63,7 +63,6 @@ impl ContextConfig {
 
     pub fn create(&mut self) -> Result<Context, bool> {
         let mut context = Context {
-            value: 1,
             debug_callback: self.debug_callback,
         };
 
@@ -100,9 +99,10 @@ impl ContextConfig {
     }
 }
 
+pub type Handle = u32;
+
 pub struct Context {
     pub debug_callback: Option<DebugFn>,
-    pub value: i32,
 }
 
 impl Context {
@@ -110,5 +110,9 @@ impl Context {
         unsafe {
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
+    }
+
+    pub fn compile_shader(&self) -> Handle {
+        0
     }
 }

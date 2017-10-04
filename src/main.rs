@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 extern crate glfw_sys as glfw;
 
 mod bedrock;

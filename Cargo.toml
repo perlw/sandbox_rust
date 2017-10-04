@@ -6,8 +6,7 @@ build = "build.rs"
 
 [dependencies]
 libc = "0.2.0"
-#glfw-sys = { path = "../glfw-rs", version = "0.1.0" }
-glfw-sys = { git = "https://github.com/perlw/glfw-rs" }
+glfw-sys = { path = "deps/glfw-sys", version = "0.1.0" }
 
 [build-dependencies]
 gl_generator = "0.5.0"

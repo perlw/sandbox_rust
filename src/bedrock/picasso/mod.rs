@@ -8,11 +8,14 @@ use self::libc::{c_char, c_int};
 
 pub mod window;
 pub mod context;
+pub mod shader;
 
 #[allow(unused_imports)]
 use self::window::{Window, WindowConfig};
 #[allow(unused_imports)]
 use self::context::{Context, ContextConfig};
+#[allow(unused_imports)]
+use self::shader::Shader;
 
 #[allow(unused)]
 extern "C" fn error_callback(error: c_int, description: *const c_char) {
@@ -27,7 +30,7 @@ extern "C" fn error_callback(error: c_int, description: *const c_char) {
 pub struct Picasso {}
 
 impl Picasso {
-    pub fn new() -> Picasso {
+    pub fn new() -> Self {
         unsafe {
             glfw::SetErrorCallback(error_callback);
 
