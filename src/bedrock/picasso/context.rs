@@ -5,8 +5,11 @@ use std;
 use std::ffi::{CStr, CString};
 use self::libc::{c_float, c_int};
 use std::ptr;
+use std::collections::HashMap;
+use std::rc::Rc;
+use std::cell::RefCell;
 
-use super::shader;
+use super::shader::Shader;
 
 #[allow(unused)]
 mod gl {
@@ -27,7 +30,7 @@ extern "system" fn debug_callback(
 ) {
     let msg = unsafe { CStr::from_ptr(message).to_string_lossy().into_owned() };
     let context = unsafe { &mut *(user_param as *mut Context) };
-    (context.debug_callback.expect("missing debug callback"))(msg);
+    context.debug_callback.expect("missing debug callback")(msg);
 }
 
 pub struct ContextConfig {
@@ -64,10 +67,11 @@ impl ContextConfig {
         self
     }
 
-    pub fn create(&mut self) -> Result<Context, bool> {
-        let mut context = Context {
+    pub fn create(&mut self) -> Rc<RefCell<Context>> {
+        let mut context = Rc::new(RefCell::new(Context {
             debug_callback: self.debug_callback,
-        };
+            shader_handles: HashMap::new(),
+        }));
 
         unsafe {
             gl::load_with(|s| glfw::GetProcAddress(CString::new(s).unwrap().as_ptr()));
@@ -76,7 +80,7 @@ impl ContextConfig {
                 // Check for extension first
                 gl::Enable(gl::DEBUG_OUTPUT);
                 gl::Enable(gl::DEBUG_OUTPUT_SYNCHRONOUS);
-                gl::DebugMessageCallback(debug_callback, &mut context as *mut _ as *mut _);
+                gl::DebugMessageCallback(debug_callback, context.as_ptr() as *mut _);
             }
 
             gl::Enable(gl::CULL_FACE);
@@ -98,14 +102,15 @@ impl ContextConfig {
             );
         }
 
-        Ok(context)
+        context
     }
 }
 
-pub type Handle = u32;
+pub type ShaderHandle = u32;
 
 pub struct Context {
     pub debug_callback: Option<DebugFn>,
+    pub shader_handles: HashMap<ShaderHandle, Shader>,
 }
 
 impl Context {
@@ -115,8 +120,8 @@ impl Context {
         }
     }
 
-    fn compile_shader(&self, source: &Vec<u8>, shader_type: u32) -> Result<Handle, String> {
-        let handle = unsafe { gl::CreateShader(shader_type) } as Handle;
+    fn compile_shader(&self, source: &Vec<u8>, shader_type: u32) -> Result<u32, String> {
+        let handle = unsafe { gl::CreateShader(shader_type) } as u32;
 
         unsafe {
             let c_source = CString::new(&source[..]).unwrap();
@@ -141,21 +146,26 @@ impl Context {
                 gl::DeleteShader(handle);
             }
 
-            return Err(
-                String::from_utf8(buf).expect("Shader compile: Failed to get shader err log"),
-            );
+            return Err(String::from_utf8(buf).expect(
+                "Shader compile: Failed to get shader err log",
+            ));
         }
 
         Ok(handle)
     }
 
-    fn attach_shaders(&self, vert_handle: Handle, frag_handle: Handle) -> Result<Handle, String> {
-        let handle = unsafe { gl::CreateProgram() } as Handle;
+    fn attach_shaders(&self, vert_handle: u32, frag_handle: u32) -> Result<ShaderHandle, String> {
+        let handle = unsafe { gl::CreateProgram() } as ShaderHandle;
 
         unsafe {
             gl::AttachShader(handle, vert_handle);
             gl::AttachShader(handle, frag_handle);
             gl::LinkProgram(handle);
+
+            gl::DetachShader(handle, vert_handle);
+            gl::DetachShader(handle, frag_handle);
+            gl::DeleteShader(vert_handle);
+            gl::DeleteShader(frag_handle);
         }
 
         let mut status = gl::FALSE as gl::types::GLint;
@@ -175,19 +185,19 @@ impl Context {
                 gl::DeleteProgram(handle);
             }
 
-            return Err(
-                String::from_utf8(buf).expect("Program attach: Failed to get program err log"),
-            );
+            return Err(String::from_utf8(buf).expect(
+                "Program attach: Failed to get program err log",
+            ));
         }
 
         Ok(handle)
     }
 
     pub fn create_shader(
-        &self,
+        &mut self,
         vert_source: &Vec<u8>,
         frag_source: &Vec<u8>,
-    ) -> Option<shader::Shader> {
+    ) -> Option<ShaderHandle> {
         let vert = self.compile_shader(vert_source, gl::VERTEX_SHADER);
         let frag = self.compile_shader(frag_source, gl::FRAGMENT_SHADER);
 
@@ -196,8 +206,15 @@ impl Context {
         }
 
         match self.attach_shaders(vert.unwrap(), frag.unwrap()) {
-            Ok(handle) => Some(shader::Shader { handle }),
-            Err(msg) => None,
+            Ok(handle) => {
+                self.shader_handles.insert(handle, Shader { handle });
+                Some(handle)
+            }
+            Err(err) => None,
         }
+    }
+
+    pub fn get_shader(&mut self, handle: ShaderHandle) -> Option<&mut Shader> {
+        self.shader_handles.get_mut(&handle)
     }
 }

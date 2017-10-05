@@ -114,9 +114,9 @@ fn main() {
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
-            config
-                .clear_color(0.5, 0.5, 1.0, 1.0)
-                .debug(|msg| println!("GL ERR: {}", msg));
+            config.clear_color(0.5, 0.5, 1.0, 1.0).debug(|msg| {
+                println!("GL ERR: {}", msg)
+            });
         })
         .create()
         .unwrap();
@@ -127,14 +127,14 @@ fn main() {
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
-            config
-                .clear_color(1.0, 0.0, 1.0, 1.0)
-                .debug(|msg| println!("GL ERR2: {}", msg));
+            config.clear_color(1.0, 0.0, 1.0, 1.0).debug(|msg| {
+                println!("GL ERR2: {}", msg)
+            });
         })
         .create()
         .unwrap();
 
-    let shader = window
+    let shader_handle = window
         .with_context(|context| {
             let mut vert_source: Vec<u8> = Vec::new();
             let mut frag_source: Vec<u8> = Vec::new();
@@ -144,23 +144,27 @@ fn main() {
             File::open("assets/shaders/simple.frag")
                 .and_then(|mut file| file.read_to_end(&mut frag_source))
                 .unwrap();
+
             context.create_shader(&vert_source, &frag_source)
         })
         .unwrap();
 
-    let shader2 = window2
+    let shader_handle2 = window2
         .with_context(|context| {
             let mut vert_source: Vec<u8> = Vec::new();
             let mut frag_source: Vec<u8> = Vec::new();
             File::open("assets/shaders/simple.vert")
                 .and_then(|mut file| file.read_to_end(&mut vert_source))
                 .unwrap();
-            File::open("assets/shaders/simple.frag")
+            File::open("assets/shaders/simple_red.frag")
                 .and_then(|mut file| file.read_to_end(&mut frag_source))
                 .unwrap();
+
             context.create_shader(&vert_source, &frag_source)
         })
         .unwrap();
+
+    println!("Shaders {} {}", shader_handle, shader_handle2);
 
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
     while !window.should_close() || !window2.should_close() {
@@ -172,12 +176,13 @@ fn main() {
 
         window.with_context(|context| {
             context.clear();
+
+            let shader = context.get_shader(shader_handle).expect("NO SHADER :(");
+            shader.activate();
         });
         window.swap_buffers();
 
-        window2.with_context(|context| {
-            context.clear();
-        });
+        window2.with_context(|context| { context.clear(); });
         window2.swap_buffers();
 
         picasso.poll_events();

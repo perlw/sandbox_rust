@@ -1,11 +1,22 @@
-use super::context;
+use std;
+use std::rc::Rc;
 
-pub struct Shader {
-    pub handle: context::Handle,
+use super::context::{Context, ShaderHandle};
+
+#[allow(unused)]
+mod gl {
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
-impl Shader {}
+pub struct Shader {
+    //pub context: Rc<context::Context>,
+    pub handle: ShaderHandle,
+}
 
-impl Drop for Shader {
-    fn drop(&mut self) {}
+impl Shader {
+    pub fn activate(&self) {
+        unsafe {
+            gl::UseProgram(self.handle);
+        }
+    }
 }

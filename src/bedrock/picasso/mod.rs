@@ -35,7 +35,6 @@ impl Picasso {
             glfw::SetErrorCallback(error_callback);
 
             glfw::Init();
-            glfw::SwapInterval(0);
 
             // Print monitors
             println!("-=Monitors=-");

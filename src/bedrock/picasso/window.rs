@@ -9,6 +9,8 @@ mod gl {
 use std;
 use std::ffi::CString;
 use self::libc::c_int;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use super::context::{Context, ContextConfig};
 
@@ -84,13 +86,6 @@ impl WindowConfig {
     }
 
     pub fn create(&mut self) -> Result<Window, bool> {
-        let mut window = Window {
-            raw_ptr: std::ptr::null_mut(),
-            context: None,
-            width: 640,
-            height: 480,
-        };
-
         unsafe {
             glfw::DefaultWindowHints();
             glfw::WindowHint(glfw::CONTEXT_VERSION_MAJOR, self.ogl_major as c_int);
@@ -112,32 +107,37 @@ impl WindowConfig {
                     glfw::FALSE
                 },
             );
+        }
 
-            window.raw_ptr = glfw::CreateWindow(
+        let raw_ptr = unsafe {
+            glfw::CreateWindow(
                 self.width as c_int,
                 self.height as c_int,
                 CString::new(self.title.as_str()).unwrap().as_ptr(),
                 std::ptr::null_mut(),
                 std::ptr::null_mut(),
-            );
+            )
+        };
 
-            glfw::SetWindowPosCallback(window.raw_ptr, window_pos_callback);
-            glfw::SetKeyCallback(window.raw_ptr, key_callback);
-
-            window.make_context_current();
-            window.context = match self.context_config.create() {
-                Ok(context) => Some(Box::new(context)),
-                Err(_) => None,
-            };
+        unsafe {
+            glfw::SetWindowPosCallback(raw_ptr, window_pos_callback);
+            glfw::SetKeyCallback(raw_ptr, key_callback);
+            glfw::MakeContextCurrent(raw_ptr);
+            //glfw::SwapInterval(0);
         }
 
-        Ok(window)
+        Ok(Window {
+            raw_ptr,
+            context: self.context_config.create(),
+            width: self.width,
+            height: self.height,
+        })
     }
 }
 
 pub struct Window {
     raw_ptr: *mut glfw::Window,
-    context: Option<Box<Context>>,
+    context: Rc<RefCell<Context>>,
     pub width: u32,
     pub height: u32,
 }
@@ -161,10 +161,13 @@ impl Window {
 
     pub fn with_context<T, F>(&mut self, fun: F) -> T
     where
-        F: Fn(&mut Box<Context>) -> T,
+        F: Fn(&mut Context) -> T,
     {
         self.make_context_current();
-        fun(&mut self.context.as_mut().expect("Must have a context"))
+
+        let mut ctxt = self.context.clone();
+        let result = fun(&mut *ctxt.borrow_mut());
+        return result;
     }
 }
 
