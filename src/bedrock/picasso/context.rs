@@ -12,7 +12,7 @@ use std::cell::RefCell;
 use super::shader::Shader;
 
 #[allow(unused)]
-mod gl {
+pub mod gl {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
@@ -68,7 +68,7 @@ impl ContextConfig {
     }
 
     pub fn create(&mut self) -> Rc<RefCell<Context>> {
-        let mut context = Rc::new(RefCell::new(Context {
+        let context = Rc::new(RefCell::new(Context {
             debug_callback: self.debug_callback,
             shader_handles: HashMap::new(),
         }));
@@ -210,7 +210,7 @@ impl Context {
                 self.shader_handles.insert(handle, Shader { handle });
                 Some(handle)
             }
-            Err(err) => None,
+            _ => None,
         }
     }
 

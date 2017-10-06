@@ -1,11 +1,6 @@
 extern crate glfw_sys as glfw;
 extern crate libc;
 
-#[allow(unused)]
-mod gl {
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
-
 use std;
 use std::ffi::CString;
 use self::libc::c_int;
@@ -165,7 +160,7 @@ impl Window {
     {
         self.make_context_current();
 
-        let mut ctxt = self.context.clone();
+        let ctxt = self.context.clone();
         let result = fun(&mut *ctxt.borrow_mut());
         return result;
     }
