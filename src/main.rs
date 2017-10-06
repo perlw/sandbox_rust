@@ -177,12 +177,11 @@ fn main() {
         window.with_context(|context| {
             context.clear();
 
-            let shader = context.get_shader(shader_handle).expect("NO SHADER :(");
-            shader.activate();
+            context.with_shader(shader_handle, |shader| shader.activate());
         });
         window.swap_buffers();
 
-        window2.with_context(|context| { context.clear(); });
+        window2.with_context(|context| context.clear());
         window2.swap_buffers();
 
         picasso.poll_events();

@@ -214,7 +214,21 @@ impl Context {
         }
     }
 
+    // Remove?
     pub fn get_shader(&mut self, handle: ShaderHandle) -> Option<&mut Shader> {
         self.shader_handles.get_mut(&handle)
+    }
+
+    pub fn with_shader<F>(&mut self, handle: ShaderHandle, fun: F) -> bool
+    where
+        F: Fn(&mut Shader),
+    {
+        match self.shader_handles.get_mut(&handle) {
+            Some(shader) => {
+                fun(shader);
+                true
+            }
+            None => false,
+        }
     }
 }
