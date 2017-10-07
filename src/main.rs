@@ -166,8 +166,15 @@ fn main() {
 
     println!("Shaders {} {}", shader_handle, shader_handle2);
 
+    window.keyboard_callback(|window, key, scancode| {
+        println!("KEY: {}", key);
+        if key == 256 {
+            window.set_should_close(true);
+        }
+    });
+
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
-    while !window.should_close() || !window2.should_close() {
+    while !window.should_close() && !window2.should_close() {
         let tick = unsafe { glfw::GetTime() as f64 };
         let delta = tick - last_tick;
         last_tick = tick;

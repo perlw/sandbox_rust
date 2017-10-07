@@ -9,24 +9,26 @@ use std::cell::RefCell;
 
 use super::context::{Context, ContextConfig};
 
+pub type KeyFn = fn(window: &mut Window, key: i32, scancode: i32);
+
 #[allow(unused)]
-extern "C" fn window_pos_callback(window: *mut glfw::Window, xpos: c_int, ypos: c_int) {
+extern "C" fn window_pos_callback(raw_window: *mut glfw::Window, xpos: c_int, ypos: c_int) {
+    let window = unsafe { &mut *(glfw::GetWindowUserPointer(raw_window) as *mut Window) };
+
     println!("WindowPos: {}x{}", xpos, ypos);
 }
 
 #[allow(unused)]
 extern "C" fn key_callback(
-    window: *mut glfw::Window,
+    raw_window: *mut glfw::Window,
     key: c_int,
     scancode: c_int,
     action: c_int,
     mods: c_int,
 ) {
-    if key == glfw::KEY_ESCAPE {
-        unsafe {
-            glfw::SetWindowShouldClose(window, glfw::TRUE);
-        }
-    }
+    // Hilariously unsafe
+    let window = unsafe { &mut *(glfw::GetWindowUserPointer(raw_window) as *mut Window) };
+    (window.key_fn)(window, key as i32, scancode as i32);
 }
 
 pub struct WindowConfig {
@@ -80,7 +82,7 @@ impl WindowConfig {
         self
     }
 
-    pub fn create(&mut self) -> Result<Window, bool> {
+    pub fn create(&mut self) -> Result<Box<Window>, bool> {
         unsafe {
             glfw::DefaultWindowHints();
             glfw::WindowHint(glfw::CONTEXT_VERSION_MAJOR, self.ogl_major as c_int);
@@ -113,31 +115,42 @@ impl WindowConfig {
                 std::ptr::null_mut(),
             )
         };
-
         unsafe {
-            glfw::SetWindowPosCallback(raw_ptr, window_pos_callback);
-            glfw::SetKeyCallback(raw_ptr, key_callback);
             glfw::MakeContextCurrent(raw_ptr);
-            //glfw::SwapInterval(0);
         }
 
-        Ok(Window {
+        let mut window = Box::new(Window {
             raw_ptr,
             context: self.context_config.create(),
             width: self.width,
             height: self.height,
-        })
+            key_fn: |_a, _b, _c|{},
+        });
+
+        unsafe {
+            glfw::SetWindowUserPointer(raw_ptr, &mut *window as *mut _ as *mut _);
+            glfw::SetWindowPosCallback(raw_ptr, window_pos_callback);
+            glfw::SetKeyCallback(raw_ptr, key_callback);
+            //glfw::SwapInterval(0);
+        }
+
+        Ok(window)
     }
 }
 
 pub struct Window {
     raw_ptr: *mut glfw::Window,
     context: Rc<RefCell<Context>>,
-    pub width: u32,
-    pub height: u32,
+    width: u32,
+    height: u32,
+    key_fn: KeyFn,
 }
 
 impl Window {
+    pub fn keyboard_callback(&mut self, fun: KeyFn) {
+        self.key_fn = fun;
+    }
+
     pub fn make_context_current(&self) {
         unsafe {
             glfw::MakeContextCurrent(self.raw_ptr);
@@ -146,6 +159,12 @@ impl Window {
 
     pub fn should_close(&self) -> bool {
         unsafe { (glfw::WindowShouldClose(self.raw_ptr) == glfw::TRUE) }
+    }
+
+    pub fn set_should_close(&mut self, flag: bool) {
+        unsafe {
+            glfw::SetWindowShouldClose(self.raw_ptr, if flag { glfw::TRUE } else { glfw::FALSE });
+        }
     }
 
     pub fn swap_buffers(&self) {
