@@ -110,7 +110,7 @@ fn main() {
     let picasso = bedrock::Picasso::new();
     let mut window = picasso
         .new_window()
-        .opengl_context_version(4, 3)
+        .opengl_context_version(3, 3)
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
@@ -123,7 +123,7 @@ fn main() {
 
     let mut window2 = picasso
         .new_window()
-        .opengl_context_version(4, 3)
+        .opengl_context_version(3, 3)
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
@@ -145,9 +145,21 @@ fn main() {
                 .and_then(|mut file| file.read_to_end(&mut frag_source))
                 .unwrap();
 
-            context.create_shader(&vert_source, &frag_source)
+            context.new_shader(&vert_source, &frag_source)
         })
         .unwrap();
+
+    let square_handle = window
+        .with_context(|context| {
+            let handle = context.new_buffergroup();
+
+            context.with_buffergroup(handle, |group| {
+                let buf = group.new_buffer();
+                // buf.set_data(?)
+            });
+
+            handle
+        });
 
     let shader_handle2 = window2
         .with_context(|context| {
@@ -160,7 +172,7 @@ fn main() {
                 .and_then(|mut file| file.read_to_end(&mut frag_source))
                 .unwrap();
 
-            context.create_shader(&vert_source, &frag_source)
+            context.new_shader(&vert_source, &frag_source)
         })
         .unwrap();
 
@@ -184,7 +196,10 @@ fn main() {
         window.with_context(|context| {
             context.clear();
 
-            context.with_shader(shader_handle, |shader| shader.activate());
+            context.with_shader_and_buffergroup(shader_handle, square_handle, |shader, square| {
+                shader.activate();
+                //square.render(?);
+            });
         });
         window.swap_buffers();
 

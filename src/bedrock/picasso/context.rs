@@ -9,7 +9,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use super::shader::Shader;
+use super::shader::{ShaderHandle, Shader};
+use super::buffer::{BufferGroupHandle, BufferGroup};
 
 #[allow(unused)]
 pub mod gl {
@@ -71,6 +72,7 @@ impl ContextConfig {
         let context = Rc::new(RefCell::new(Context {
             debug_callback: self.debug_callback,
             shader_handles: HashMap::new(),
+            buffergroup_handles: HashMap::new(),
         }));
 
         unsafe {
@@ -106,11 +108,10 @@ impl ContextConfig {
     }
 }
 
-pub type ShaderHandle = u32;
-
 pub struct Context {
     pub debug_callback: Option<DebugFn>,
     pub shader_handles: HashMap<ShaderHandle, Shader>,
+    pub buffergroup_handles: HashMap<BufferGroupHandle, BufferGroup>,
 }
 
 impl Context {
@@ -193,7 +194,7 @@ impl Context {
         Ok(handle)
     }
 
-    pub fn create_shader(
+    pub fn new_shader(
         &mut self,
         vert_source: &Vec<u8>,
         frag_source: &Vec<u8>,
@@ -207,11 +208,24 @@ impl Context {
 
         match self.attach_shaders(vert.unwrap(), frag.unwrap()) {
             Ok(handle) => {
-                self.shader_handles.insert(handle, Shader { handle });
+                self.shader_handles.insert(handle, Shader::new(handle));
                 Some(handle)
             }
             _ => None,
         }
+    }
+
+    pub fn new_buffergroup(&mut self) -> BufferGroupHandle {
+        let mut handle = 0 as BufferGroupHandle;
+
+        unsafe {
+            gl::GenVertexArrays(1, &mut handle);
+            // TODO: Save state in context
+            gl::BindVertexArray(handle);
+        }
+
+        self.buffergroup_handles.insert(handle, BufferGroup::new(handle));
+        handle
     }
 
     // Remove?
@@ -230,5 +244,33 @@ impl Context {
             }
             None => false,
         }
+    }
+
+    pub fn with_buffergroup<F>(&mut self, handle: BufferGroupHandle, fun: F) -> bool
+    where
+        F: Fn(&mut BufferGroup),
+    {
+        match self.buffergroup_handles.get_mut(&handle) {
+            Some(buffergroup) => {
+                fun(buffergroup);
+                true
+            }
+            None => false,
+        }
+    }
+
+    pub fn with_shader_and_buffergroup<F>(&mut self, shader_handle: ShaderHandle, buffergroup_handle: BufferGroupHandle, fun: F) -> bool
+    where
+        F: Fn(&mut Shader, &mut BufferGroup),
+    {
+        let shader = self.shader_handles.get_mut(&shader_handle);
+        let buffergroup = self.buffergroup_handles.get_mut(&buffergroup_handle);
+
+        if shader.is_some() && buffergroup.is_some() {
+            fun(shader.unwrap(), buffergroup.unwrap());
+            return true;
+        }
+
+        false
     }
 }

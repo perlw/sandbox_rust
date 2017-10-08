@@ -9,6 +9,7 @@ use self::libc::{c_char, c_int};
 pub mod window;
 pub mod context;
 pub mod shader;
+pub mod buffer;
 
 #[allow(unused_imports)]
 use self::window::{Window, WindowConfig};
@@ -16,6 +17,8 @@ use self::window::{Window, WindowConfig};
 use self::context::{Context, ContextConfig};
 #[allow(unused_imports)]
 use self::shader::Shader;
+#[allow(unused_imports)]
+use self::buffer::Buffer;
 
 #[allow(unused)]
 extern "C" fn error_callback(error: c_int, description: *const c_char) {
