@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::prelude::*;
 
 mod bedrock;
+use bedrock::picasso::buffer::BufferType;
 
 struct TestSystem {
     dummy: i32,
@@ -153,8 +154,10 @@ fn main() {
         let handle = context.new_buffergroup();
 
         context.with_buffergroup(handle, |group| {
-            let buf = group.new_buffer();
-            // buf.set_data(?)
+            let size = 32;
+            let vertices: Vec<i32> = vec![0, 0, size, size, 0, size, 0, 0, size, 0, size, size];
+            let vert_buf = group.new_buffer();
+            //vert_buf.set_data(BufferType::VertexBuffer, vertices)
         });
 
         handle

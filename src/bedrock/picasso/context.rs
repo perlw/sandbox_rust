@@ -10,7 +10,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use super::shader::{ShaderHandle, Shader};
-use super::buffer::{BufferGroupHandle, BufferGroup};
+use super::buffer::{BufferGroupHandle, BufferHandle, BufferGroup, BufferType};
 
 #[allow(unused)]
 pub mod gl {
@@ -290,6 +290,7 @@ impl Context {
 pub struct GlState {
     shader: ShaderHandle,
     buffergroup: BufferGroupHandle,
+    buffer: BufferHandle,
 }
 
 impl GlState {
@@ -297,6 +298,7 @@ impl GlState {
         Self {
             shader: 0,
             buffergroup: 0,
+            buffer: 0,
         }
     }
 
@@ -315,6 +317,15 @@ impl GlState {
                 gl::BindVertexArray(handle);
             }
             self.buffergroup = handle;
+        }
+    }
+
+    pub fn bind_buffer(&mut self, buffer_type: BufferType, handle: ShaderHandle) {
+        if self.buffer != handle {
+            unsafe {
+                gl::BindBuffer(gl::ARRAY_BUFFER, handle);
+            }
+            self.buffer = handle;
         }
     }
 }
