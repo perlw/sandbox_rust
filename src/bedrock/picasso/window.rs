@@ -44,8 +44,8 @@ pub struct WindowConfig {
 }
 
 impl WindowConfig {
-    pub fn title(&mut self, title: String) -> &mut Self {
-        self.title = title;
+    pub fn title(&mut self, title: &str) -> &mut Self {
+        self.title = title.into();
         self
     }
 
@@ -75,9 +75,9 @@ impl WindowConfig {
         self
     }
 
-    pub fn with_context_config<F>(&mut self, fun: F) -> &mut Self
+    pub fn with_context_config<F>(&mut self, mut fun: F) -> &mut Self
     where
-        F: Fn(&mut ContextConfig),
+        F: FnMut(&mut ContextConfig),
     {
         fun(&mut self.context_config);
         self
@@ -179,9 +179,9 @@ impl Window {
         }
     }
 
-    pub fn with_context<T, F>(&mut self, fun: F) -> T
+    pub fn with_context<T, F>(&mut self, mut fun: F) -> T
     where
-        F: Fn(&mut Context) -> T,
+        F: FnMut(&mut Context) -> T,
     {
         self.make_context_current();
 

@@ -1,10 +1,12 @@
 extern crate glfw_sys as glfw;
+extern crate cgmath;
 
 use std::fs::File;
 use std::io::prelude::*;
+use cgmath::prelude::*;
 
 mod bedrock;
-use bedrock::picasso::buffer::BufferTarget;
+use bedrock::picasso::buffer::{BufferHandle, BufferTarget, BufferType};
 
 struct TestSystem {
     dummy: i32,
@@ -111,12 +113,13 @@ fn main() {
     let picasso = bedrock::Picasso::new();
     let mut window = picasso
         .new_window()
+        .title("blue")
         .opengl_context_version(3, 3)
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
             config.clear_color(0.5, 0.5, 1.0, 1.0).debug(|msg| {
-                println!("GL ERR: {}", msg)
+                println!("BLUE GL INFO: {}", msg)
             });
         })
         .create()
@@ -124,12 +127,13 @@ fn main() {
 
     let mut window2 = picasso
         .new_window()
+        .title("purple")
         .opengl_context_version(3, 3)
         .opengl_context_debug(true)
         .resizable(false)
         .with_context_config(|config| {
             config.clear_color(1.0, 0.0, 1.0, 1.0).debug(|msg| {
-                println!("GL ERR2: {}", msg)
+                println!("PURPLE GL INFO: {}", msg)
             });
         })
         .create()
@@ -150,17 +154,61 @@ fn main() {
         })
         .unwrap();
 
+        /*
+        //let matrix = cgmath::ortho(0., 640., 480., 0., 0., 1.0);
+  //let matrix = cgmath::Matrix4::from_angle_z(cgmath::Rad{ s: 1.5 });
+  let matrix = cgmath::Matrix4::from_translation(cgmath::vec3(0., 0., 0.));
+  gl::ProgramUniformMatrix4fv(program.program, pmatrix_uniform as gl::types::GLint, 1,
+                                gl::FALSE as gl::types::GLboolean, ortho.as_ptr());
+  */
+
     let square_handle = window.with_context(|context| {
         let handle = context.new_buffergroup();
 
+        let mut vert_buf = 0 as BufferHandle;
+        let mut coord_buf = 0 as BufferHandle;
         context.with_buffergroup(handle, |group| {
             let size = 32;
-            let vert_buf = group.new_buffer();
+            vert_buf = group.new_buffer(BufferTarget::ArrayBuffer);
             group.with_buffer(vert_buf, |buffer| {
-                let vertices: Vec<i32> = vec![0, 0, size, size, 0, size, 0, 0, size, 0, size, size];
-                buffer.set_data(BufferTarget::ArrayBuffer, vertices)
+                let data: Vec<i32> = vec![
+                    0, 0,
+                    size, size,
+                    0, size,
+
+                    0, 0,
+                    size, 0,
+                    size, size
+                ];
+                buffer.set_data(data)
+            });
+
+            coord_buf = group.new_buffer(BufferTarget::ArrayBuffer);
+            group.with_buffer(coord_buf, |buffer| {
+                let data: Vec<f32> = vec![
+                    0.0, 1.0,
+                    1.0, 0.0,
+                    0.0, 0.0,
+
+                    0.0, 1.0,
+                    1.0, 1.0,
+                    1.0, 0.0,
+                ];
+                buffer.set_data(data)
             });
         });
+
+        context.with_shader_and_buffergroup(
+                shader_handle,
+                handle,
+                |shader, group| {
+                    let vertex_loc = shader.get_attrib_location("vertex");
+                    group.with_buffer(vert_buf, |buffer| buffer.vertex_attrib(vertex_loc as u32, 2, BufferType::Int));
+
+                    let coord_loc = shader.get_attrib_location("coord");
+                    group.with_buffer(coord_buf, |buffer| buffer.vertex_attrib(coord_loc as u32, 2, BufferType::Float));
+                }
+            );
 
         handle
     });

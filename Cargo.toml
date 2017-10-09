@@ -5,6 +5,7 @@ authors = ["Per Lönn Wege <per.loenn.wege@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
+cgmath = "0.15.0"
 libc = "0.2.0"
 glfw-sys = { path = "deps/glfw-sys", version = "0.1.0" }
 

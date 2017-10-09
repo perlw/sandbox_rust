@@ -240,9 +240,9 @@ impl Context {
         handle
     }
 
-    pub fn with_shader<F>(&mut self, handle: ShaderHandle, fun: F) -> bool
+    pub fn with_shader<F>(&mut self, handle: ShaderHandle, mut fun: F) -> bool
     where
-        F: Fn(&mut Shader),
+        F: FnMut(&mut Shader),
     {
         match self.shader_handles.get_mut(&handle) {
             Some(shader) => {
@@ -254,9 +254,9 @@ impl Context {
         }
     }
 
-    pub fn with_buffergroup<F>(&mut self, handle: BufferGroupHandle, fun: F) -> bool
+    pub fn with_buffergroup<F>(&mut self, handle: BufferGroupHandle, mut fun: F) -> bool
     where
-        F: Fn(&mut BufferGroup),
+        F: FnMut(&mut BufferGroup),
     {
         match self.buffergroup_handles.get_mut(&handle) {
             Some(buffergroup) => {
@@ -272,10 +272,10 @@ impl Context {
         &mut self,
         shader_handle: ShaderHandle,
         buffergroup_handle: BufferGroupHandle,
-        fun: F,
+        mut fun: F,
     ) -> bool
     where
-        F: Fn(&mut Shader, &mut BufferGroup),
+        F: FnMut(&mut Shader, &mut BufferGroup),
     {
         let shader = self.shader_handles.get_mut(&shader_handle);
         let buffergroup = self.buffergroup_handles.get_mut(&buffergroup_handle);

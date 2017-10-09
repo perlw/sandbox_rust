@@ -19,6 +19,23 @@ impl BufferTarget {
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum BufferType {
+    Int,
+    Float,
+}
+
+impl BufferType {
+    pub fn to_gl(&self) -> u32 {
+        match self {
+            Int => gl::INT,
+            Float => gl::FLOAT,
+            _ => unreachable!(),
+        }
+    }
+}
+
+
 pub type BufferGroupHandle = u32;
 pub type BufferHandle = u32;
 
@@ -37,7 +54,7 @@ impl BufferGroup {
         }
     }
 
-    pub fn new_buffer(&mut self) -> BufferHandle {
+    pub fn new_buffer(&mut self, target: BufferTarget) -> BufferHandle {
         let mut handle = 0 as BufferHandle;
 
         self.gl_state.borrow_mut().bind_buffergroup(handle);
@@ -50,6 +67,7 @@ impl BufferGroup {
             Buffer::new(
                 self.gl_state.clone(),
                 handle,
+                target,
             ),
         );
         handle
@@ -87,25 +105,37 @@ impl Drop for BufferGroup {
 pub struct Buffer {
     gl_state: Rc<RefCell<GlState>>,
     handle: BufferHandle,
+    target: BufferTarget,
 }
 
 impl Buffer {
-    pub fn new(gl_state: Rc<RefCell<GlState>>, handle: BufferHandle) -> Self {
-        Self { gl_state, handle }
+    pub fn new(gl_state: Rc<RefCell<GlState>>, handle: BufferHandle, target: BufferTarget) -> Self {
+        Self { gl_state, handle, target }
     }
 
-    pub fn set_data<T>(&mut self, buffer_target: BufferTarget, mut data: Vec<T>) {
+    pub fn set_data<T>(&mut self, mut data: Vec<T>) {
         self.gl_state.borrow_mut().bind_buffer(
-            buffer_target,
+            self.target,
             self.handle,
         );
         unsafe {
             gl::BufferData(
-                buffer_target.to_gl(),
-                std::mem::size_of_val(&data) as isize,
-                data.as_mut_ptr() as *mut i32 as *mut _,
+                self.target.to_gl(),
+                (data.len() * std::mem::size_of::<T>()) as isize,
+                data.as_mut_ptr() as *mut _,
                 gl::STATIC_DRAW,
             );
+        }
+    }
+
+    pub fn vertex_attrib(&self, attrib: u32, num_elems: u32, elem_type: BufferType) {
+        self.gl_state.borrow_mut().bind_buffer(
+            self.target,
+            self.handle,
+        );
+        unsafe {
+            gl::EnableVertexAttribArray(attrib);
+            gl::VertexAttribPointer(attrib, num_elems as i32, elem_type.to_gl(), gl::FALSE, 0, std::ptr::null_mut());
         }
     }
 }
