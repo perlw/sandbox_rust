@@ -10,7 +10,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use super::shader::{ShaderHandle, Shader};
-use super::buffer::{BufferGroupHandle, BufferHandle, BufferGroup, BufferType};
+use super::buffer::{BufferGroupHandle, BufferHandle, BufferGroup, BufferTarget};
 
 #[allow(unused)]
 pub mod gl {
@@ -299,6 +299,7 @@ pub struct GlState {
     buffer: BufferHandle,
 }
 
+// Thoughts: Log changes?
 impl GlState {
     pub fn new() -> Self {
         Self {
@@ -326,10 +327,10 @@ impl GlState {
         }
     }
 
-    pub fn bind_buffer(&mut self, buffer_type: BufferType, handle: BufferHandle) {
+    pub fn bind_buffer(&mut self, buffer_target: BufferTarget, handle: BufferHandle) {
         if self.buffer != handle {
             unsafe {
-                gl::BindBuffer(gl::ARRAY_BUFFER, handle);
+                gl::BindBuffer(buffer_target.to_gl(), handle);
             }
             self.buffer = handle;
         }

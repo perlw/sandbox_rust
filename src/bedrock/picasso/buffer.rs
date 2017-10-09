@@ -5,9 +5,18 @@ use std::collections::HashMap;
 
 use super::context::{gl, GlState};
 
-pub enum BufferType {
-    VertexBuffer,
-    CoordBuffer,
+#[derive(Clone, Copy)]
+pub enum BufferTarget {
+    ArrayBuffer,
+}
+
+impl BufferTarget {
+    pub fn to_gl(&self) -> u32 {
+        match self {
+            ArrayBuffer => gl::ARRAY_BUFFER,
+            _ => unreachable!(),
+        }
+    }
 }
 
 pub type BufferGroupHandle = u32;
@@ -16,7 +25,7 @@ pub type BufferHandle = u32;
 pub struct BufferGroup {
     gl_state: Rc<RefCell<GlState>>,
     handle: BufferGroupHandle,
-    buffers: HashMap<BufferHandle, Buffer>,
+    buffer_handles: HashMap<BufferHandle, Buffer>,
 }
 
 impl BufferGroup {
@@ -24,7 +33,7 @@ impl BufferGroup {
         Self {
             gl_state,
             handle,
-            buffers: HashMap::new(),
+            buffer_handles: HashMap::new(),
         }
     }
 
@@ -36,11 +45,34 @@ impl BufferGroup {
             gl::GenBuffers(1, &mut handle);
         }
 
-        self.buffers.insert(
+        self.buffer_handles.insert(
             handle,
-            Buffer::new(self.gl_state.clone(), handle),
+            Buffer::new(
+                self.gl_state.clone(),
+                handle,
+            ),
         );
         handle
+    }
+
+    pub fn with_buffer<F>(&mut self, handle: BufferHandle, fun: F) -> bool
+    where
+        F: Fn(&mut Buffer),
+    {
+        match self.buffer_handles.get_mut(&handle) {
+            Some(buffer) => {
+                fun(buffer);
+                true
+            }
+            None => false,
+        }
+    }
+
+    pub fn draw(&self) {
+        self.gl_state.borrow_mut().bind_buffergroup(self.handle);
+        unsafe {
+            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+        }
     }
 }
 
@@ -62,11 +94,19 @@ impl Buffer {
         Self { gl_state, handle }
     }
 
-    pub fn set_data<T>(&mut self, buffer_type: BufferType, data: Vec<T>) {
+    pub fn set_data<T>(&mut self, buffer_target: BufferTarget, mut data: Vec<T>) {
         self.gl_state.borrow_mut().bind_buffer(
-            buffer_type,
+            buffer_target,
             self.handle,
         );
+        unsafe {
+            gl::BufferData(
+                buffer_target.to_gl(),
+                0, /* INVALID */
+                data.as_mut_ptr() as *mut i32 as *mut _,
+                gl::STATIC_DRAW,
+            );
+        }
     }
 }
 
