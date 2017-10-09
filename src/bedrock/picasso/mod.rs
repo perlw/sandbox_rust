@@ -101,6 +101,7 @@ impl Picasso {
                 clear_color_b: 0.0,
                 clear_color_a: 0.0,
             },
+            sync_interval: 1,
         }
     }
 }

@@ -40,6 +40,7 @@ pub struct WindowConfig {
     pub ogl_minor: u32,
     pub ogl_debug: bool,
     pub context_config: ContextConfig,
+    pub sync_interval: u32,
 }
 
 impl WindowConfig {
@@ -79,6 +80,11 @@ impl WindowConfig {
         F: Fn(&mut ContextConfig),
     {
         fun(&mut self.context_config);
+        self
+    }
+
+    pub fn sync_interval(&mut self, interval: u32) -> &mut Self {
+        self.sync_interval = interval;
         self
     }
 
@@ -131,7 +137,7 @@ impl WindowConfig {
             glfw::SetWindowUserPointer(raw_ptr, &mut *window as *mut _ as *mut _);
             glfw::SetWindowPosCallback(raw_ptr, window_pos_callback);
             glfw::SetKeyCallback(raw_ptr, key_callback);
-            //glfw::SwapInterval(0);
+            glfw::SwapInterval(self.sync_interval as i32);
         }
 
         Ok(window)

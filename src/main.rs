@@ -184,11 +184,21 @@ fn main() {
         }
     });
 
+    let mut fps_second = 0.0 as f64;
+    let mut fps_count = 0;
     let mut last_tick = unsafe { glfw::GetTime() as f64 };
     while !window.should_close() && !window2.should_close() {
         let tick = unsafe { glfw::GetTime() as f64 };
         let delta = tick - last_tick;
         last_tick = tick;
+
+        fps_count += 1;
+        fps_second += delta;
+        if fps_second >= 1.0 {
+            println!("FPS: {}", fps_count);
+            fps_second = 0.0;
+            fps_count = 0;
+        }
 
         kronos.update(delta);
 
