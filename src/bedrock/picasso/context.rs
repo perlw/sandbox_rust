@@ -73,6 +73,7 @@ impl ContextConfig {
             debug_callback: self.debug_callback,
             shader_handles: HashMap::new(),
             buffergroup_handles: HashMap::new(),
+            gl_state: Rc::new(RefCell::new(GlState::new())),
         }));
 
         unsafe {
@@ -112,6 +113,7 @@ pub struct Context {
     pub debug_callback: Option<DebugFn>,
     pub shader_handles: HashMap<ShaderHandle, Shader>,
     pub buffergroup_handles: HashMap<BufferGroupHandle, BufferGroup>,
+    gl_state: Rc<RefCell<GlState>>,
 }
 
 impl Context {
@@ -208,7 +210,13 @@ impl Context {
 
         match self.attach_shaders(vert.unwrap(), frag.unwrap()) {
             Ok(handle) => {
-                self.shader_handles.insert(handle, Shader::new(handle));
+                self.shader_handles.insert(
+                    handle,
+                    Shader::new(
+                        self.gl_state.clone(),
+                        handle,
+                    ),
+                );
                 Some(handle)
             }
             _ => None,
@@ -220,17 +228,16 @@ impl Context {
 
         unsafe {
             gl::GenVertexArrays(1, &mut handle);
-            // TODO: Save state in context
-            gl::BindVertexArray(handle);
         }
 
-        self.buffergroup_handles.insert(handle, BufferGroup::new(handle));
+        self.buffergroup_handles.insert(
+            handle,
+            BufferGroup::new(
+                self.gl_state.clone(),
+                handle,
+            ),
+        );
         handle
-    }
-
-    // Remove?
-    pub fn get_shader(&mut self, handle: ShaderHandle) -> Option<&mut Shader> {
-        self.shader_handles.get_mut(&handle)
     }
 
     pub fn with_shader<F>(&mut self, handle: ShaderHandle, fun: F) -> bool
@@ -259,7 +266,12 @@ impl Context {
         }
     }
 
-    pub fn with_shader_and_buffergroup<F>(&mut self, shader_handle: ShaderHandle, buffergroup_handle: BufferGroupHandle, fun: F) -> bool
+    pub fn with_shader_and_buffergroup<F>(
+        &mut self,
+        shader_handle: ShaderHandle,
+        buffergroup_handle: BufferGroupHandle,
+        fun: F,
+    ) -> bool
     where
         F: Fn(&mut Shader, &mut BufferGroup),
     {
@@ -272,5 +284,37 @@ impl Context {
         }
 
         false
+    }
+}
+
+pub struct GlState {
+    shader: ShaderHandle,
+    buffergroup: BufferGroupHandle,
+}
+
+impl GlState {
+    pub fn new() -> Self {
+        Self {
+            shader: 0,
+            buffergroup: 0,
+        }
+    }
+
+    pub fn bind_shader(&mut self, handle: ShaderHandle) {
+        if self.shader != handle {
+            unsafe {
+                gl::UseProgram(handle);
+            }
+            self.shader = handle;
+        }
+    }
+
+    pub fn bind_buffergroup(&mut self, handle: BufferGroupHandle) {
+        if self.buffergroup != handle {
+            unsafe {
+                gl::BindVertexArray(handle);
+            }
+            self.buffergroup = handle;
+        }
     }
 }

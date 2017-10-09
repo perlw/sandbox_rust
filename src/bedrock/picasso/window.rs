@@ -124,7 +124,7 @@ impl WindowConfig {
             context: self.context_config.create(),
             width: self.width,
             height: self.height,
-            key_fn: |_a, _b, _c|{},
+            key_fn: |_a, _b, _c| {},
         });
 
         unsafe {

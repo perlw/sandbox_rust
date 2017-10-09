@@ -1,21 +1,23 @@
-use super::context::gl;
+use std;
+use std::rc::Rc;
+use std::cell::RefCell;
+
+use super::context::{gl, GlState};
 
 pub type ShaderHandle = u32;
 
 pub struct Shader {
+    gl_state: Rc<RefCell<GlState>>,
     pub handle: ShaderHandle,
 }
 
 impl Shader {
-    pub fn new(handle: ShaderHandle) -> Self {
-        Self { handle }
+    pub fn new(gl_state: Rc<RefCell<GlState>>, handle: ShaderHandle) -> Self {
+        Self { gl_state, handle }
     }
 
-    pub fn activate(&self) {
-        unsafe {
-            // TODO: Save state in context
-            gl::UseProgram(self.handle);
-        }
+    pub fn bind(&mut self) {
+        self.gl_state.borrow_mut().bind_shader(self.handle);
     }
 }
 

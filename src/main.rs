@@ -149,17 +149,16 @@ fn main() {
         })
         .unwrap();
 
-    let square_handle = window
-        .with_context(|context| {
-            let handle = context.new_buffergroup();
+    let square_handle = window.with_context(|context| {
+        let handle = context.new_buffergroup();
 
-            context.with_buffergroup(handle, |group| {
-                let buf = group.new_buffer();
-                // buf.set_data(?)
-            });
-
-            handle
+        context.with_buffergroup(handle, |group| {
+            let buf = group.new_buffer();
+            // buf.set_data(?)
         });
+
+        handle
+    });
 
     let shader_handle2 = window2
         .with_context(|context| {
@@ -197,13 +196,14 @@ fn main() {
             context.clear();
 
             context.with_shader_and_buffergroup(shader_handle, square_handle, |shader, square| {
-                shader.activate();
+                shader.bind();
+                square.bind();
                 //square.render(?);
             });
         });
         window.swap_buffers();
 
-        window2.with_context(|context| context.clear());
+        window2.with_context(|context| { context.clear(); });
         window2.swap_buffers();
 
         picasso.poll_events();
