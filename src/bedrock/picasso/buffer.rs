@@ -102,7 +102,7 @@ impl Buffer {
         unsafe {
             gl::BufferData(
                 buffer_target.to_gl(),
-                0, /* INVALID */
+                std::mem::size_of_val(&data) as isize,
                 data.as_mut_ptr() as *mut i32 as *mut _,
                 gl::STATIC_DRAW,
             );
