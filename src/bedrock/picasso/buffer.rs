@@ -89,7 +89,7 @@ impl BufferGroup {
     pub fn draw(&self) {
         self.gl_state.borrow_mut().bind_buffergroup(self.handle);
         unsafe {
-            gl::DrawArrays(gl::TRIANGLES, 0, 6);
+            gl::DrawArrays(gl::LINES, 0, 6);
         }
     }
 }

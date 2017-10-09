@@ -293,6 +293,7 @@ impl Context {
     }
 }
 
+#[derive(Debug)]
 pub struct GlState {
     shader: ShaderHandle,
     buffergroup: BufferGroupHandle,
@@ -309,12 +310,18 @@ impl GlState {
         }
     }
 
+    fn log_state_change(&self) {
+        println!("{:?}", self);
+    }
+
     pub fn bind_shader(&mut self, handle: ShaderHandle) {
         if self.shader != handle {
             unsafe {
                 gl::UseProgram(handle);
             }
             self.shader = handle;
+
+            self.log_state_change();
         }
     }
 
@@ -324,6 +331,8 @@ impl GlState {
                 gl::BindVertexArray(handle);
             }
             self.buffergroup = handle;
+
+            self.log_state_change();
         }
     }
 
@@ -333,6 +342,8 @@ impl GlState {
                 gl::BindBuffer(buffer_target.to_gl(), handle);
             }
             self.buffer = handle;
+
+            self.log_state_change();
         }
     }
 }

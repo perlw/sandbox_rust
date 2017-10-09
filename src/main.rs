@@ -7,6 +7,7 @@ use cgmath::prelude::*;
 
 mod bedrock;
 use bedrock::picasso::buffer::{BufferHandle, BufferTarget, BufferType};
+use bedrock::picasso::shader::{ShaderUniformData};
 
 struct TestSystem {
     dummy: i32,
@@ -150,17 +151,21 @@ fn main() {
                 .and_then(|mut file| file.read_to_end(&mut frag_source))
                 .unwrap();
 
-            context.new_shader(&vert_source, &frag_source)
+            let handle = context.new_shader(&vert_source, &frag_source);
+
+            context.with_shader(handle.unwrap(), |shader| {
+                let ortho = cgmath::ortho::<f32>(0., 640., 0., 480., 1., 0.);
+                let model = cgmath::Matrix4::<f32>::identity();
+
+                let pmatrix_uniform = shader.get_uniform_location("pMatrix");
+                shader.set_uniform(pmatrix_uniform, ShaderUniformData::Mat4(ortho));
+                let mvmatrix_uniform = shader.get_uniform_location("mvMatrix");
+                shader.set_uniform(mvmatrix_uniform, ShaderUniformData::Mat4(model));
+            });
+
+            handle
         })
         .unwrap();
-
-        /*
-        //let matrix = cgmath::ortho(0., 640., 480., 0., 0., 1.0);
-  //let matrix = cgmath::Matrix4::from_angle_z(cgmath::Rad{ s: 1.5 });
-  let matrix = cgmath::Matrix4::from_translation(cgmath::vec3(0., 0., 0.));
-  gl::ProgramUniformMatrix4fv(program.program, pmatrix_uniform as gl::types::GLint, 1,
-                                gl::FALSE as gl::types::GLboolean, ortho.as_ptr());
-  */
 
     let square_handle = window.with_context(|context| {
         let handle = context.new_buffergroup();
@@ -186,13 +191,13 @@ fn main() {
             coord_buf = group.new_buffer(BufferTarget::ArrayBuffer);
             group.with_buffer(coord_buf, |buffer| {
                 let data: Vec<f32> = vec![
-                    0.0, 1.0,
-                    1.0, 0.0,
-                    0.0, 0.0,
+                    0., 1.,
+                    1., 0.,
+                    0., 0.,
 
-                    0.0, 1.0,
-                    1.0, 1.0,
-                    1.0, 0.0,
+                    0., 1.,
+                    1., 1.,
+                    1., 0.,
                 ];
                 buffer.set_data(data)
             });
@@ -227,8 +232,6 @@ fn main() {
             context.new_shader(&vert_source, &frag_source)
         })
         .unwrap();
-
-    println!("Shaders {} {}", shader_handle, shader_handle2);
 
     window.keyboard_callback(|window, key, scancode| {
         println!("KEY: {}", key);
