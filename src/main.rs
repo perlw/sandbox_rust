@@ -208,12 +208,9 @@ fn main() {
         window.with_context(|context| {
             context.clear();
 
-            // Thoughts: Handle all binding behind the scenes?
             // Thoughts: Better way to deal with requesting interfaces, or let other
             // system/module/etc handle abstraction?
             context.with_shader_and_buffergroup(shader_handle, square_handle, |shader, square| {
-                shader.bind();
-                square.bind();
                 //square.render(?);
             });
         });

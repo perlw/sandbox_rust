@@ -42,10 +42,6 @@ impl BufferGroup {
         );
         handle
     }
-
-    pub fn bind(&mut self) {
-        self.gl_state.borrow_mut().bind_buffergroup(self.handle);
-    }
 }
 
 impl Drop for BufferGroup {

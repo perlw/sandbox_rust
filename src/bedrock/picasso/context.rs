@@ -246,6 +246,7 @@ impl Context {
     {
         match self.shader_handles.get_mut(&handle) {
             Some(shader) => {
+                self.gl_state.borrow_mut().bind_shader(handle);
                 fun(shader);
                 true
             }
@@ -259,6 +260,7 @@ impl Context {
     {
         match self.buffergroup_handles.get_mut(&handle) {
             Some(buffergroup) => {
+                self.gl_state.borrow_mut().bind_buffergroup(handle);
                 fun(buffergroup);
                 true
             }
@@ -279,6 +281,10 @@ impl Context {
         let buffergroup = self.buffergroup_handles.get_mut(&buffergroup_handle);
 
         if shader.is_some() && buffergroup.is_some() {
+            self.gl_state.borrow_mut().bind_shader(shader_handle);
+            self.gl_state.borrow_mut().bind_buffergroup(
+                buffergroup_handle,
+            );
             fun(shader.unwrap(), buffergroup.unwrap());
             return true;
         }
@@ -320,7 +326,7 @@ impl GlState {
         }
     }
 
-    pub fn bind_buffer(&mut self, buffer_type: BufferType, handle: ShaderHandle) {
+    pub fn bind_buffer(&mut self, buffer_type: BufferType, handle: BufferHandle) {
         if self.buffer != handle {
             unsafe {
                 gl::BindBuffer(gl::ARRAY_BUFFER, handle);
