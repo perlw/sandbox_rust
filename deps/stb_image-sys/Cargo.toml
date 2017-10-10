@@ -1,0 +1,15 @@
+[package]
+name = "stb_image-sys"
+version = "0.1.0"
+authors = ["Per Lönn Wege <per.loenn.wege@gmail.com>"]
+links = "stb_image"
+license = "MIT"
+repository = "https://github.com/perlw/glfw-rs"
+description = "Native bindings to the stb_image library"
+
+[lib]
+name = "stb_image_sys"
+path = "lib.rs"
+
+[dependencies]
+libc = "0.2"
