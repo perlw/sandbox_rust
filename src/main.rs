@@ -1,4 +1,5 @@
 extern crate glfw_sys as glfw;
+extern crate stb_image_sys as stbi;
 extern crate cgmath;
 
 use std::fs::File;
@@ -139,6 +140,27 @@ fn main() {
         })
         .create()
         .unwrap();
+
+    {
+        let mut font_buffer: Vec<u8> = Vec::new();
+        File::open("assets/fonts/cp437_8x8.png")
+            .and_then(|mut file| file.read_to_end(&mut font_buffer))
+            .unwrap();
+
+        let mut w = 0;
+        let mut h = 0;
+        let raw_image = unsafe {
+            stbi::load_from_memory(
+                font_buffer.as_mut_ptr() as *mut _,
+                font_buffer.len() as i32,
+                &mut w,
+                &mut h,
+                std::ptr::null_mut(),
+                3,
+            )
+        };
+        println!("IMAGE SIZE {} {}", w, h);
+    }
 
     let shader_handle = window
         .with_context(|context| {

@@ -5,7 +5,6 @@ authors = ["Per Lönn Wege <per.loenn.wege@gmail.com>"]
 links = "glfw"
 build = "build.rs"
 license = "MIT"
-repository = "https://github.com/perlw/glfw-rs"
 description = "Native bindings to the glfw library"
 
 [lib]

@@ -3,8 +3,8 @@ name = "stb_image-sys"
 version = "0.1.0"
 authors = ["Per Lönn Wege <per.loenn.wege@gmail.com>"]
 links = "stb_image"
+build = "build.rs"
 license = "MIT"
-repository = "https://github.com/perlw/glfw-rs"
 description = "Native bindings to the stb_image library"
 
 [lib]
@@ -13,3 +13,6 @@ path = "lib.rs"
 
 [dependencies]
 libc = "0.2"
+
+[build-dependencies]
+gcc = "0.3.54"
