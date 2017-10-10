@@ -142,7 +142,7 @@ fn main() {
         .unwrap();
 
     let mut texture_handle = 0 as u32;
-    {
+    window.with_context(|context| {
         let mut font_buffer: Vec<u8> = Vec::new();
         File::open("assets/fonts/cp437_8x8.png")
             .and_then(|mut file| file.read_to_end(&mut font_buffer))
@@ -165,6 +165,7 @@ fn main() {
         use bedrock::picasso::context::gl;
         unsafe {
             gl::GenTextures(1, &mut texture_handle);
+            gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, texture_handle);
 
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
@@ -196,7 +197,7 @@ fn main() {
         unsafe {
             stbi::free(raw_image);
         }
-    }
+    });
 
     let shader_handle = window
         .with_context(|context| {
@@ -219,6 +220,9 @@ fn main() {
                 shader.set_uniform(pmatrix_uniform, ShaderUniformData::Mat4(ortho));
                 let mvmatrix_uniform = shader.get_uniform_location("mvMatrix");
                 shader.set_uniform(mvmatrix_uniform, ShaderUniformData::Mat4(model));
+
+                let tex_uniform = shader.get_uniform_location("tex");
+                shader.set_uniform(tex_uniform, ShaderUniformData::Int(0));
             });
 
             handle
@@ -305,11 +309,15 @@ fn main() {
 
             // Thoughts: Better way to deal with requesting interfaces, or let other
             // system/module/etc handle abstraction?
-            context.with_shader_and_buffergroup(
-                shader_handle,
-                square_handle,
-                |shader, square| square.draw(),
-            );
+            context.with_shader_and_buffergroup(shader_handle, square_handle, |shader, square| {
+                use bedrock::picasso::context::gl;
+                unsafe {
+                    gl::ActiveTexture(gl::TEXTURE0);
+                    gl::BindTexture(gl::TEXTURE_2D, texture_handle);
+                }
+
+                square.draw();
+            });
         });
         window.swap_buffers();
 

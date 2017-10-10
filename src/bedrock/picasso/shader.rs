@@ -49,6 +49,9 @@ impl Shader {
     pub fn set_uniform(&self, uniform: ShaderUniform, data: ShaderUniformData) {
         self.gl_state.borrow_mut().bind_shader(self.handle);
         match data {
+            ShaderUniformData::Int(val) => unsafe {
+                gl::ProgramUniform1i(self.handle, uniform, val);
+            },
             ShaderUniformData::Mat4(matrix) => unsafe {
                 gl::ProgramUniformMatrix4fv(self.handle, uniform, 1, gl::FALSE, matrix.as_ptr());
             },
