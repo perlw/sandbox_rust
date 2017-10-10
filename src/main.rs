@@ -141,6 +141,7 @@ fn main() {
         .create()
         .unwrap();
 
+    let mut texture_handle = 0 as u32;
     {
         let mut font_buffer: Vec<u8> = Vec::new();
         File::open("assets/fonts/cp437_8x8.png")
@@ -160,6 +161,41 @@ fn main() {
             )
         };
         println!("IMAGE SIZE {} {}", w, h);
+
+        use bedrock::picasso::context::gl;
+        unsafe {
+            gl::GenTextures(1, &mut texture_handle);
+            gl::BindTexture(gl::TEXTURE_2D, texture_handle);
+
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_S,
+                gl::CLAMP_TO_BORDER as i32,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_T,
+                gl::CLAMP_TO_BORDER as i32,
+            );
+
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as i32,
+                w,
+                h,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                raw_image as *mut _,
+            );
+        }
+
+        unsafe {
+            stbi::free(raw_image);
+        }
     }
 
     let shader_handle = window
