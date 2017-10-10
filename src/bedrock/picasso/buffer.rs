@@ -89,7 +89,7 @@ impl BufferGroup {
     pub fn draw(&self) {
         self.gl_state.borrow_mut().bind_buffergroup(self.handle);
         unsafe {
-            gl::DrawArrays(gl::LINES, 0, 6);
+            gl::DrawArrays(gl::TRIANGLES, 0, 6);
         }
     }
 }
@@ -110,7 +110,11 @@ pub struct Buffer {
 
 impl Buffer {
     pub fn new(gl_state: Rc<RefCell<GlState>>, handle: BufferHandle, target: BufferTarget) -> Self {
-        Self { gl_state, handle, target }
+        Self {
+            gl_state,
+            handle,
+            target,
+        }
     }
 
     pub fn set_data<T>(&mut self, mut data: Vec<T>) {
@@ -135,7 +139,14 @@ impl Buffer {
         );
         unsafe {
             gl::EnableVertexAttribArray(attrib);
-            gl::VertexAttribPointer(attrib, num_elems as i32, elem_type.to_gl(), gl::FALSE, 0, std::ptr::null_mut());
+            gl::VertexAttribPointer(
+                attrib,
+                num_elems as i32,
+                elem_type.to_gl(),
+                gl::FALSE,
+                0,
+                std::ptr::null_mut(),
+            );
         }
     }
 }

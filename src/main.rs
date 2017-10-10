@@ -7,7 +7,7 @@ use cgmath::prelude::*;
 
 mod bedrock;
 use bedrock::picasso::buffer::{BufferHandle, BufferTarget, BufferType};
-use bedrock::picasso::shader::{ShaderUniformData};
+use bedrock::picasso::shader::ShaderUniformData;
 
 struct TestSystem {
     dummy: i32,
@@ -154,7 +154,7 @@ fn main() {
             let handle = context.new_shader(&vert_source, &frag_source);
 
             context.with_shader(handle.unwrap(), |shader| {
-                let ortho = cgmath::ortho::<f32>(0., 640., 0., 480., 1., 0.);
+                let ortho = cgmath::ortho::<f32>(0., 640., 0., 480., 0., 1.);
                 let model = cgmath::Matrix4::<f32>::identity();
 
                 let pmatrix_uniform = shader.get_uniform_location("pMatrix");
@@ -173,47 +173,31 @@ fn main() {
         let mut vert_buf = 0 as BufferHandle;
         let mut coord_buf = 0 as BufferHandle;
         context.with_buffergroup(handle, |group| {
-            let size = 32;
+            let size = 320;
             vert_buf = group.new_buffer(BufferTarget::ArrayBuffer);
             group.with_buffer(vert_buf, |buffer| {
-                let data: Vec<i32> = vec![
-                    0, 0,
-                    size, size,
-                    0, size,
-
-                    0, 0,
-                    size, 0,
-                    size, size
-                ];
+                let data: Vec<i32> = vec![0, 0, size, size, 0, size, 0, 0, size, 0, size, size];
                 buffer.set_data(data)
             });
 
             coord_buf = group.new_buffer(BufferTarget::ArrayBuffer);
             group.with_buffer(coord_buf, |buffer| {
-                let data: Vec<f32> = vec![
-                    0., 1.,
-                    1., 0.,
-                    0., 0.,
-
-                    0., 1.,
-                    1., 1.,
-                    1., 0.,
-                ];
+                let data: Vec<f32> = vec![0., 1., 1., 0., 0., 0., 0., 1., 1., 1., 1., 0.];
                 buffer.set_data(data)
             });
         });
 
-        context.with_shader_and_buffergroup(
-                shader_handle,
-                handle,
-                |shader, group| {
-                    let vertex_loc = shader.get_attrib_location("vertex");
-                    group.with_buffer(vert_buf, |buffer| buffer.vertex_attrib(vertex_loc as u32, 2, BufferType::Int));
+        context.with_shader_and_buffergroup(shader_handle, handle, |shader, group| {
+            let vertex_loc = shader.get_attrib_location("vertex");
+            group.with_buffer(vert_buf, |buffer| {
+                buffer.vertex_attrib(vertex_loc as u32, 2, BufferType::Int)
+            });
 
-                    let coord_loc = shader.get_attrib_location("coord");
-                    group.with_buffer(coord_buf, |buffer| buffer.vertex_attrib(coord_loc as u32, 2, BufferType::Float));
-                }
-            );
+            let coord_loc = shader.get_attrib_location("coord");
+            group.with_buffer(coord_buf, |buffer| {
+                buffer.vertex_attrib(coord_loc as u32, 2, BufferType::Float)
+            });
+        });
 
         handle
     });
