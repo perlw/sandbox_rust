@@ -234,18 +234,19 @@ fn main() {
 
         let mut vert_buf = 0 as BufferHandle;
         let mut coord_buf = 0 as BufferHandle;
-        context.with_buffergroup(handle, |group| {
+        context.with_buffergroup(handle, |group| {;
             let size = 320;
             vert_buf = group.new_buffer(BufferTarget::ArrayBuffer);
             group.with_buffer(vert_buf, |buffer| {
                 let data: Vec<i32> = vec![0, 0, size, size, 0, size, 0, 0, size, 0, size, size];
-                buffer.set_data(data)
+                buffer.set_data(&data);
             });
 
             coord_buf = group.new_buffer(BufferTarget::ArrayBuffer);
             group.with_buffer(coord_buf, |buffer| {
-                let data: Vec<f32> = vec![0., 1., 1., 0., 0., 0., 0., 1., 1., 1., 1., 0.];
-                buffer.set_data(data)
+                //let data: Vec<f32> = vec![0., 1., 1., 0., 0., 0., 0., 1., 1., 1., 1., 0.];
+                let data: Vec<i32> = vec![0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0];
+                buffer.set_data(&data);
             });
         });
 
@@ -257,7 +258,7 @@ fn main() {
 
             let coord_loc = shader.get_attrib_location("coord");
             group.with_buffer(coord_buf, |buffer| {
-                buffer.vertex_attrib(coord_loc as u32, 2, BufferType::Float)
+                buffer.vertex_attrib(coord_loc as u32, 2, BufferType::Int)
             });
         });
 
@@ -275,9 +276,57 @@ fn main() {
                 .and_then(|mut file| file.read_to_end(&mut frag_source))
                 .unwrap();
 
-            context.new_shader(&vert_source, &frag_source)
+            let handle = context.new_shader(&vert_source, &frag_source);
+
+            context.with_shader(handle.unwrap(), |shader| {
+                let ortho = cgmath::ortho::<f32>(0., 640., 0., 480., 0., 1.);
+                let model = cgmath::Matrix4::<f32>::identity();
+
+                let pmatrix_uniform = shader.get_uniform_location("pMatrix");
+                shader.set_uniform(pmatrix_uniform, ShaderUniformData::Mat4(ortho));
+                let mvmatrix_uniform = shader.get_uniform_location("mvMatrix");
+                shader.set_uniform(mvmatrix_uniform, ShaderUniformData::Mat4(model));
+            });
+
+            handle
         })
         .unwrap();
+
+    let square2_handle = window2.with_context(|context| {
+        let handle = context.new_buffergroup();
+
+        let mut vert_buf = 0 as BufferHandle;
+        let mut coord_buf = 0 as BufferHandle;
+        context.with_buffergroup(handle, |group| {;
+            let size = 320;
+            vert_buf = group.new_buffer(BufferTarget::ArrayBuffer);
+            group.with_buffer(vert_buf, |buffer| {
+                let data: Vec<i32> = vec![0, 0, size, size, 0, size, 0, 0, size, 0, size, size];
+                buffer.set_data(&data);
+            });
+
+            coord_buf = group.new_buffer(BufferTarget::ArrayBuffer);
+            group.with_buffer(coord_buf, |buffer| {
+                //let data: Vec<f32> = vec![0., 1., 1., 0., 0., 0., 0., 1., 1., 1., 1., 0.];
+                let data: Vec<i32> = vec![0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0];
+                buffer.set_data(&data);
+            });
+        });
+
+        context.with_shader_and_buffergroup(shader_handle2, handle, |shader, group| {
+            let vertex_loc = shader.get_attrib_location("vertex");
+            group.with_buffer(vert_buf, |buffer| {
+                buffer.vertex_attrib(vertex_loc as u32, 2, BufferType::Int)
+            });
+
+            let coord_loc = shader.get_attrib_location("coord");
+            group.with_buffer(coord_buf, |buffer| {
+                buffer.vertex_attrib(coord_loc as u32, 2, BufferType::Int)
+            });
+        });
+
+        handle
+    });
 
     window.keyboard_callback(|window, key, scancode| {
         println!("KEY: {}", key);
@@ -309,19 +358,23 @@ fn main() {
 
             // Thoughts: Better way to deal with requesting interfaces, or let other
             // system/module/etc handle abstraction?
-            context.with_shader_and_buffergroup(shader_handle, square_handle, |shader, square| {
-                use bedrock::picasso::context::gl;
-                unsafe {
-                    gl::ActiveTexture(gl::TEXTURE0);
-                    gl::BindTexture(gl::TEXTURE_2D, texture_handle);
-                }
-
-                square.draw();
-            });
+            context.with_shader_and_buffergroup(
+                shader_handle,
+                square_handle,
+                |shader, square| square.draw(),
+            );
         });
         window.swap_buffers();
 
-        window2.with_context(|context| { context.clear(); });
+        window2.with_context(|context| {
+            context.clear();
+
+            context.with_shader_and_buffergroup(
+                shader_handle,
+                square_handle,
+                |shader, square| square.draw(),
+            );
+        });
         window2.swap_buffers();
 
         picasso.poll_events();

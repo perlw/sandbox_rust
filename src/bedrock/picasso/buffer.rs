@@ -77,6 +77,7 @@ impl BufferGroup {
     where
         F: Fn(&mut Buffer),
     {
+        self.gl_state.borrow_mut().bind_buffergroup(self.handle);
         match self.buffer_handles.get_mut(&handle) {
             Some(buffer) => {
                 fun(buffer);
@@ -117,7 +118,7 @@ impl Buffer {
         }
     }
 
-    pub fn set_data<T>(&mut self, mut data: Vec<T>) {
+    pub fn set_data<T>(&mut self, data: &[T]) {
         self.gl_state.borrow_mut().bind_buffer(
             self.target,
             self.handle,
@@ -126,7 +127,7 @@ impl Buffer {
             gl::BufferData(
                 self.target.to_gl(),
                 (data.len() * std::mem::size_of::<T>()) as isize,
-                data.as_mut_ptr() as *mut _,
+                data.as_ptr() as *mut _,
                 gl::STATIC_DRAW,
             );
         }
@@ -145,7 +146,7 @@ impl Buffer {
                 elem_type.to_gl(),
                 gl::FALSE,
                 0,
-                std::ptr::null_mut(),
+                std::ptr::null(),
             );
         }
     }
